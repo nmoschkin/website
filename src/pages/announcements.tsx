@@ -29,21 +29,21 @@ export default Announcements;
 
 export const pageQuery = graphql`
 	query AnnouncementsPageQuery {
-	  allMarkdownRemark(
-		filter: {fields: {source: {eq: "announcements"}}}
-		limit: 20
-		sort: {fields: frontmatter___date, order: DESC}
-	  ) {
-		edges {
-		  node {
-		    id
-			html
-			frontmatter {
-			  title
-			  date
+		allMarkdownRemark(
+			filter: {fields: {source: {eq: "announcements"}}}
+			limit: 20
+			sort: {frontmatter: {date: DESC}}
+		) {
+			edges {
+			node {
+				id
+				html
+				frontmatter {
+				title
+				date
+				}
 			}
-		  }
 		}
-	  }
 	}
+}
 `;
