@@ -117,13 +117,14 @@ interface EventMap {
 const EventPicker = (props: EventPickerProps) => {
 	const { playerData, events, crew, buffConfig, allCrew } = props;
 
-	const isc = useStateWithStorage('tools/ignoreSharedCrew', false)
+	const usc = useStateWithStorage('tools/useSharedCrew', true);
 	const [eventIndex, setEventIndex] = useStateWithStorage('eventplanner/eventIndex', 0);
 	const [phaseIndex, setPhaseIndex] = useStateWithStorage('eventplanner/phaseIndex', 0);
 	const [prospects, setProspects] = useStateWithStorage('eventplanner/prospects', [] as LockedProspect[]);
 
 	const eventsList = [] as EventMap[];
-	const [ignoreSharedCrew, setIgnoreSharedCrew ] = isc;
+	const [useSharedCrew, setUseSharedCrew ] = usc;
+	const [sharedCrew, setSharedCrew] = useStateWithStorage<PlayerCrew | undefined>('eventplanner/sharedCrew', undefined);
 	
 	events.forEach((activeEvent, eventId) => {
 		eventsList.push(
@@ -194,18 +195,22 @@ const EventPicker = (props: EventPickerProps) => {
 		}
 	});
 
-	let sharedCrew = playerData.player.character.crew_borrows?.length ? playerData.player.character.crew_borrows[0] : undefined;
+	let newSharedCrew = playerData.player.character.crew_borrows?.length ? playerData.player.character.crew_borrows[0] : undefined;
 
-	if (!ignoreSharedCrew && sharedCrew) {
-		sharedCrew = {...allCrew.find(c => c.symbol == sharedCrew.symbol), ...sharedCrew };
-		applyCrewBuffs(sharedCrew, buffConfig);
-		// generateBuffedSkills(sharedCrew, buffConfig);
-		sharedCrew.shared = true;
-		sharedCrew.statusIcon = "share alternate";
-		sharedCrew.have = false;
-		sharedCrew.id = myCrew.length + 1;
-		console.log(sharedCrew);
-		myCrew.push(sharedCrew);
+	if (!sharedCrew && useSharedCrew && newSharedCrew) {
+		console.debug("Found shared crew");
+		newSharedCrew = {...allCrew.find(c => c.symbol == newSharedCrew?.symbol), ...newSharedCrew } as PlayerCrew;
+		applyCrewBuffs(newSharedCrew, buffConfig);		
+		newSharedCrew.dateShared = new Date();
+		newSharedCrew.shared = true;
+		newSharedCrew.statusIcon = "share alternate";
+		newSharedCrew.have = false;
+		newSharedCrew.id = myCrew.length + 1;
+		setSharedCrew(newSharedCrew);
+		myCrew.push(newSharedCrew);
+	} else if (sharedCrew && !!sharedCrew.dateShared && ((Date.now() - sharedCrew.dateShared.getTime()) / (1000 * 60 * 60 * 24)) > 4) { 
+		// Event has finished so delete shared crew
+		setSharedCrew(undefined);
 	}
 
 	return (
@@ -222,7 +227,7 @@ const EventPicker = (props: EventPickerProps) => {
 				<div>{eventData.description}</div>
 				{phaseList.length > 1 && (<div style={{ margin: '1em 0' }}>Select a phase: <Dropdown selection options={phaseList} value={phaseIndex} onChange={(e, { value }) => setPhaseIndex(value as number) } /></div>)}
 			</Form>
-			<EventCrewTable allCrew={allCrew} crew={myCrew} eventData={eventData} phaseIndex={phaseIndex} buffConfig={buffConfig} lockable={lockable} ignoreSharedCrew={isc} />
+			<EventCrewTable allCrew={allCrew} crew={myCrew} eventData={eventData} phaseIndex={phaseIndex} buffConfig={buffConfig} lockable={lockable} useSharedCrew={usc} />
 			<EventProspects pool={allBonusCrew} prospects={prospects} setProspects={setProspects} />
 			{eventData.content_types[phaseIndex] === 'shuttles' && (<EventShuttles playerData={playerData} crew={myCrew} eventData={eventData} />)}
 		</React.Fragment>
@@ -232,11 +237,11 @@ const EventPicker = (props: EventPickerProps) => {
 type EventCrewTableProps = {
 	allCrew: (CrewMember | PlayerCrew)[];
 	crew: PlayerCrew[];
-	eventData: any;
+	eventData: GameEvent;
 	phaseIndex: number;
 	buffConfig: BuffStatTable;
 	lockable?: any[];
-	ignoreSharedCrew: any[];
+	useSharedCrew: any[];
 };
 
 const EventCrewTable = (props: EventCrewTableProps) => {
@@ -246,8 +251,8 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 	const [applyBonus, setApplyBonus] = useStateWithStorage('eventplanner/applyBonus', true);
 	const [showPotential, setShowPotential] = useStateWithStorage('eventplanner/showPotential', false);
 	const [showFrozen, setShowFrozen] = useStateWithStorage('eventplanner/showFrozen', true);
-	const [initOptions, setInitOptions] = React.useState<InitialOptions>({});
-	const [ignoreSharedCrew, setIgnoreSharedCrew] = props.ignoreSharedCrew;
+	const [initOptions, setInitOptions] = React.useState({} as InitialOptions);
+	const [useSharedCrew, setUseSharedCrew] = props.useSharedCrew;
 
 	const crewAnchor = React.useRef<HTMLDivElement>(null);
 
@@ -255,7 +260,7 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 		setInitOptions({});
 	}, [eventData, phaseIndex]);
 
-	if (eventData.bonus.length === 0)
+	if (eventData.bonus?.length === 0)
 		return (
 			<div style={{ marginTop: '1em' }}>
 				Featured crew not yet identified for this event.
@@ -312,7 +317,7 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 	let myCrew = JSON.parse(JSON.stringify(props.crew));
 
 	// Filter crew by bonus, frozen here instead of searchabletable callback so matrix can use filtered crew list
-	if (showBonus) myCrew = myCrew.filter((c) => eventData.bonus.indexOf(c.symbol) >= 0);
+	if (showBonus) myCrew = myCrew.filter((c) => (eventData.bonus?.indexOf(c.symbol) ?? 0) >= 0);
 	if (!showFrozen) myCrew = myCrew.filter((c) => c.immortal <= 0);
 
 	const getPairScore = (crew: any, primary: string, secondary: string) => {
@@ -328,11 +333,11 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 		// First adjust skill scores as necessary
 		if (applyBonus || showPotential) {
 			crew.bonus = 1;
-			if (applyBonus && eventData.featured.indexOf(crew.symbol) >= 0) {
+			if (applyBonus && eventData?.featured_crew?.indexOf(crew.symbol) >= 0) {
 				if (phaseType === 'gather') crew.bonus = 10;
 				else if (phaseType === 'shuttles') crew.bonus = 3;
 			}
-			else if (applyBonus && eventData.bonus.indexOf(crew.symbol) >= 0) {
+			else if (applyBonus && (eventData.bonus?.indexOf(crew.symbol) ?? 0) >= 0) {
 				if (phaseType === 'gather') crew.bonus = 5;
 				else if (phaseType === 'shuttles') crew.bonus = 2;
 			}
@@ -420,11 +425,11 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 						onChange={(e, { checked }) => setShowFrozen(checked)}
 					/>
 					<Form.Checkbox 
-						checked={ignoreSharedCrew}
-						onChange={({}, { checked }) => setIgnoreSharedCrew(checked)}
+						checked={useSharedCrew}
+						onChange={({}, { checked }) => setUseSharedCrew(checked)}
 						label={
 							<label>
-								Ignore shared crew<Popup content='Note: Crew numbers are based on user buffs and may not match actual score' trigger={<Icon name='info' />} />
+								Use shared crew<Popup content='Note: Crew numbers are based on user buffs and may not match actual score' trigger={<Icon name='info' />} />
 							</label>
 						}
 					/>
