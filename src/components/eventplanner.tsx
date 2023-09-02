@@ -117,13 +117,12 @@ interface EventMap {
 const EventPicker = (props: EventPickerProps) => {
 	const { playerData, events, crew, buffConfig, allCrew } = props;
 
-	const usc = useStateWithStorage('tools/useSharedCrew', true);
 	const [eventIndex, setEventIndex] = useStateWithStorage('eventplanner/eventIndex', 0);
 	const [phaseIndex, setPhaseIndex] = useStateWithStorage('eventplanner/phaseIndex', 0);
 	const [prospects, setProspects] = useStateWithStorage('eventplanner/prospects', [] as LockedProspect[]);
 
 	const eventsList = [] as EventMap[];
-	const [useSharedCrew, setUseSharedCrew ] = usc;
+	const [useSharedCrew, setUseSharedCrew ] = useStateWithStorage('tools/useSharedCrew', true);
 	const [sharedCrew, setSharedCrew] = useStateWithStorage<PlayerCrew | undefined>('eventplanner/sharedCrew', undefined);
 	
 	events.forEach((activeEvent, eventId) => {
@@ -236,7 +235,7 @@ const EventPicker = (props: EventPickerProps) => {
 				<div>{eventData.description}</div>
 				{phaseList.length > 1 && (<div style={{ margin: '1em 0' }}>Select a phase: <Dropdown selection options={phaseList} value={phaseIndex} onChange={(e, { value }) => setPhaseIndex(value as number) } /></div>)}
 			</Form>
-			<EventCrewTable allCrew={allCrew} crew={myCrew} eventData={eventData} phaseIndex={phaseIndex} buffConfig={buffConfig} lockable={lockable} useSharedCrew={usc} />
+			<EventCrewTable allCrew={allCrew} crew={myCrew} eventData={eventData} phaseIndex={phaseIndex} buffConfig={buffConfig} lockable={lockable} useSharedCrew={useSharedCrew} setUseSharedCrew={setUseSharedCrew} />
 			<EventProspects pool={allBonusCrew} prospects={prospects} setProspects={setProspects} />
 			{eventData.content_types[phaseIndex] === 'shuttles' && (<EventShuttles playerData={playerData} crew={myCrew} eventData={eventData} />)}
 		</React.Fragment>
@@ -249,8 +248,9 @@ type EventCrewTableProps = {
 	eventData: GameEvent;
 	phaseIndex: number;
 	buffConfig: BuffStatTable;
-	lockable?: any[];
-	useSharedCrew: any[];
+	lockable?: LockedProspect[];
+	useSharedCrew: boolean;
+	setUseSharedCrew: (value: boolean) => void;
 };
 
 const EventCrewTable = (props: EventCrewTableProps) => {
@@ -263,7 +263,7 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 	const [showPotential, setShowPotential] = useStateWithStorage('eventplanner/showPotential', false);
 	const [showFrozen, setShowFrozen] = useStateWithStorage('eventplanner/showFrozen', true);
 	const [initOptions, setInitOptions] = React.useState({} as InitialOptions);
-	const [useSharedCrew, setUseSharedCrew] = props.useSharedCrew;
+	const { useSharedCrew, setUseSharedCrew } = props;
 
 	const crewAnchor = React.useRef<HTMLDivElement>(null);
 
@@ -437,7 +437,7 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 					/>
 					{playerData?.player.squad.rank !== "LEADER" && <Form.Checkbox 
 						checked={useSharedCrew}
-						onChange={({}, { checked }) => setUseSharedCrew(checked)}
+						onChange={({}, { checked }) => setUseSharedCrew(checked ?? false)}
 						label={
 							<label>
 								Use shared crew<Popup content='Note: Crew numbers are based on user buffs and may not match actual score' trigger={<Icon name='info' />} />
