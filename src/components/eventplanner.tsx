@@ -196,7 +196,9 @@ const EventPicker = (props: EventPickerProps) => {
 	});
 
 	let newSharedCrew = playerData.player.character.crew_borrows?.length ? playerData.player.character.crew_borrows[0] : undefined;
-
+	if (sharedCrew && typeof sharedCrew.dateShared === 'string') {
+		sharedCrew.dateShared = new Date (sharedCrew.dateShared);
+	}
 	if (!sharedCrew && useSharedCrew && newSharedCrew) {
 		console.debug("Found shared crew");
 		newSharedCrew = {...allCrew.find(c => c.symbol == newSharedCrew?.symbol), ...newSharedCrew } as PlayerCrew;
@@ -211,6 +213,9 @@ const EventPicker = (props: EventPickerProps) => {
 	} else if (sharedCrew && !!sharedCrew.dateShared && ((Date.now() - sharedCrew.dateShared.getTime()) / (1000 * 60 * 60 * 24)) > 4) { 
 		// Event has finished so delete shared crew
 		setSharedCrew(undefined);
+	}
+	else if (sharedCrew && !myCrew.find(mcf => mcf.symbol === sharedCrew.symbol && mcf.shared)) {
+		myCrew.push(sharedCrew);
 	}
 
 	return (
