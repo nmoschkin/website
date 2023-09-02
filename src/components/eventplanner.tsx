@@ -194,7 +194,7 @@ const EventPicker = (props: EventPickerProps) => {
 		}
 	});
 
-	let newSharedCrew = (playerData.player.character.crew_borrows?.length && playerData?.player.squad.rank !== "LEADER") ? playerData.player.character.crew_borrows[0] : undefined;
+	let newSharedCrew = (playerData.player.character.crew_borrows?.length && playerData?.player?.squad?.rank !== "LEADER") ? playerData.player.character.crew_borrows[0] : undefined;
 	if (sharedCrew && typeof sharedCrew.dateShared === 'string') {
 		sharedCrew.dateShared = new Date (sharedCrew.dateShared);
 	}
@@ -210,7 +210,7 @@ const EventPicker = (props: EventPickerProps) => {
 		setSharedCrew(newSharedCrew);
 		myCrew.push(newSharedCrew);
 	} 
-	else if (sharedCrew && (!useSharedCrew || playerData?.player.squad.rank === "LEADER")) {
+	else if (sharedCrew && (!useSharedCrew || playerData?.player?.squad?.rank === "LEADER")) {
 		setSharedCrew(undefined);
 	}
 	else if (sharedCrew && !!sharedCrew.dateShared && ((Date.now() - sharedCrew.dateShared.getTime()) / (1000 * 60 * 60 * 24)) > 4) { 
