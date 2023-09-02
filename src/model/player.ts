@@ -145,8 +145,8 @@ export interface Player {
     crew: PlayerCrew[];
     unOwnedCrew?: PlayerCrew[];
     items: PlayerEquipmentItem[]
-    crew_borrows?: any[]
-    crew_shares?: any[]
+    crew_borrows?: PlayerCrew[]
+    crew_shares?: PlayerCrew[]
     crew_limit: number
     crew_limit_increase_per_purchase?: number
     next_crew_limit_increase_cost?: NextCrewLimitIncreaseCost
@@ -550,6 +550,8 @@ export interface Player {
 
     /** Used internally. Not part of source data.  */
     statusIcon?: SemanticICONS;
+    shared?: boolean;
+    dateShared: Date;
 
     /** Used internally. Not part of source data.  */
     traits_matched?: string[];
@@ -789,6 +791,9 @@ export interface Player {
     next_threshold_points?: number
     next_threshold_rewards?: any[]
     bonus?: string[];
+    
+    /** Used internally, not part of data */
+    bonusGuessed?: boolean;
   }
  
   
