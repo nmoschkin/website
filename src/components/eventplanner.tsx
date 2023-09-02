@@ -194,10 +194,9 @@ const EventPicker = (props: EventPickerProps) => {
 		}
 	});
 
-	let sharedCrew = playerData.player.character.crew_borrows ? playerData.player.character.crew_borrows[0] : undefined;
+	let sharedCrew = playerData.player.character.crew_borrows?.length ? playerData.player.character.crew_borrows[0] : undefined;
 
 	if (!ignoreSharedCrew && sharedCrew) {
-		console.debug("Using shared crew");
 		sharedCrew = {...allCrew.find(c => c.symbol == sharedCrew.symbol), ...sharedCrew };
 		applyCrewBuffs(sharedCrew, buffConfig);
 		// generateBuffedSkills(sharedCrew, buffConfig);
@@ -462,10 +461,11 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 							gridGap: '1px'
 						}}
 					>
-						<div style={{ gridArea: 'icon' }}>
+						<div style={{ gridArea: 'icon', display: "flex", flexDirection: "row", alignItems: "flex-end" }}>
 							<CrewTarget targetGroup='eventTarget' inputItem={crew} >
-								<img width={48} src={`${process.env.GATSBY_ASSETS_URL}${crew.imageUrlPortrait}`} />
+								<img width={48} src={`${process.env.GATSBY_ASSETS_URL}${crew.imageUrlPortrait}`} />								
 							</CrewTarget>
+							{crew.statusIcon === "share alternate" && <Icon style={{margin:"0 0 0.5em -0.25em"}} name={crew.statusIcon} size='small' />}
 						</div>
 						<div style={{ gridArea: 'stats' }}>
 							<span style={{ fontWeight: 'bolder', fontSize: '1.25em' }}><Link to={`/crew/${crew.symbol}/`}>{crew.name}</Link></span>
