@@ -9,6 +9,7 @@ import { EquipmentCommon } from "./equipment";
 import { Collection, Icon } from "./game-elements"
 import { ShuttleAdventure } from "./shuttle";
 import { Archetype17, ArchetypeRoot17, ArchetypeRoot20 } from "./archetype";
+import { SemanticICONS } from "semantic-ui-react";
 
 export interface AtlasIcon extends Icon {
     atlas_info: string
@@ -546,6 +547,9 @@ export interface Player {
      * Used internally. Not part of source data.
      */
     have?: boolean;
+
+    /** Used internally. Not part of source data.  */
+    statusIcon?: SemanticICONS;
 
     /** Used internally. Not part of source data.  */
     traits_matched?: string[];
