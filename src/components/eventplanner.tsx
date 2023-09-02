@@ -195,7 +195,7 @@ const EventPicker = (props: EventPickerProps) => {
 		}
 	});
 
-	let newSharedCrew = playerData.player.character.crew_borrows?.length ? playerData.player.character.crew_borrows[0] : undefined;
+	let newSharedCrew = (playerData.player.character.crew_borrows?.length && playerData?.player.squad.rank !== "LEADER") ? playerData.player.character.crew_borrows[0] : undefined;
 	if (sharedCrew && typeof sharedCrew.dateShared === 'string') {
 		sharedCrew.dateShared = new Date (sharedCrew.dateShared);
 	}
@@ -255,7 +255,9 @@ type EventCrewTableProps = {
 
 const EventCrewTable = (props: EventCrewTableProps) => {
 	const { allCrew, eventData, phaseIndex, buffConfig } = props;
-
+	const context = React.useContext(MergedContext);
+	const { playerData } = context;
+	
 	const [showBonus, setShowBonus] = useStateWithStorage('eventplanner/showBonus', true);
 	const [applyBonus, setApplyBonus] = useStateWithStorage('eventplanner/applyBonus', true);
 	const [showPotential, setShowPotential] = useStateWithStorage('eventplanner/showPotential', false);
@@ -433,7 +435,7 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 						checked={showFrozen}
 						onChange={(e, { checked }) => setShowFrozen(checked)}
 					/>
-					<Form.Checkbox 
+					{playerData?.player.squad.rank !== "LEADER" && <Form.Checkbox 
 						checked={useSharedCrew}
 						onChange={({}, { checked }) => setUseSharedCrew(checked)}
 						label={
@@ -441,7 +443,7 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 								Use shared crew<Popup content='Note: Crew numbers are based on user buffs and may not match actual score' trigger={<Icon name='info' />} />
 							</label>
 						}
-					/>
+					/>}
 				</Form.Group>
 			</div>
 			<SearchableTable
