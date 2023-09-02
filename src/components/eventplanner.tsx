@@ -210,7 +210,11 @@ const EventPicker = (props: EventPickerProps) => {
 		newSharedCrew.id = myCrew.length + 1;
 		setSharedCrew(newSharedCrew);
 		myCrew.push(newSharedCrew);
-	} else if (sharedCrew && !!sharedCrew.dateShared && ((Date.now() - sharedCrew.dateShared.getTime()) / (1000 * 60 * 60 * 24)) > 4) { 
+	} 
+	else if (sharedCrew && !useSharedCrew) {
+		setSharedCrew(undefined)
+	}
+	else if (sharedCrew && !!sharedCrew.dateShared && ((Date.now() - sharedCrew.dateShared.getTime()) / (1000 * 60 * 60 * 24)) > 4) { 
 		// Event has finished so delete shared crew
 		setSharedCrew(undefined);
 	}
