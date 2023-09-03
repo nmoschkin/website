@@ -9,6 +9,7 @@ import { EquipmentCommon } from "./equipment";
 import { Collection, Icon } from "./game-elements"
 import { ShuttleAdventure } from "./shuttle";
 import { Archetype17, ArchetypeRoot17, ArchetypeRoot20 } from "./archetype";
+import { SemanticICONS } from "semantic-ui-react";
 
 export interface AtlasIcon extends Icon {
     atlas_info: string
@@ -147,8 +148,8 @@ export interface Player {
     crew: PlayerCrew[];
     unOwnedCrew?: PlayerCrew[];
     items: PlayerEquipmentItem[]
-    crew_borrows?: any[]
-    crew_shares?: any[]
+    crew_borrows?: PlayerCrew[]
+    crew_shares?: PlayerCrew[]
     crew_limit: number
     crew_limit_increase_per_purchase?: number
     next_crew_limit_increase_cost?: NextCrewLimitIncreaseCost
@@ -554,6 +555,11 @@ export interface Player {
     have?: boolean;
 
     /** Used internally. Not part of source data.  */
+    statusIcon?: SemanticICONS;
+    shared?: boolean;
+    dateShared: Date;
+
+    /** Used internally. Not part of source data.  */
     traits_matched?: string[];
     /** Used internally. Not part of source data.  */
     only_frozen?: boolean;
@@ -794,6 +800,9 @@ export interface Player {
     next_threshold_points?: number
     next_threshold_rewards?: any[]
     bonus?: string[];
+    
+    /** Used internally, not part of data */
+    bonusGuessed?: boolean;
   }
 
 

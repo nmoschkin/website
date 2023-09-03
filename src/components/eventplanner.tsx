@@ -1,6 +1,6 @@
 import React from 'react';
-import { Header, Table, Icon, Rating, Form, Dropdown, Checkbox, Image, Message } from 'semantic-ui-react';
-import { Link } from 'gatsby';
+import { Header, Table, Icon, Rating, Form, Dropdown, Checkbox, Image, Message, Popup, SemanticICONS } from 'semantic-ui-react';
+import { Link, navigate } from 'gatsby';
 
 import CONFIG from './CONFIG';
 
@@ -16,8 +16,8 @@ import { BestCombos, CompletionState, GameEvent, EventCombos, EventPair, EventSk
 import { ComputedBuff, CrewMember, Skill } from '../model/crew';
 import { InitialOptions, LockedProspect } from '../model/game-elements';
 import { CrewHoverStat, CrewTarget } from './hovering/crewhoverstat';
-import { applySkillBuff, navToCrewPage } from '../utils/crewutils';
 import { GlobalContext } from '../context/globalcontext';
+import { applyCrewBuffs, applySkillBuff, navToCrewPage } from '../utils/crewutils';
 
 
 const EventPlanner = () => {
@@ -77,7 +77,8 @@ const EventPlanner = () => {
 		}
 
 		myCrew.push(crewman);
-	});
+	}); 
+
 
 	const buffConfig = calculateBuffConfig(playerData.player);
 
@@ -125,6 +126,9 @@ const EventPicker = (props: EventPickerProps) => {
 	const [prospects, setProspects] = useStateWithStorage('eventplanner/prospects', [] as LockedProspect[]);
 
 	const eventsList = [] as EventMap[];
+	const [useSharedCrew, setUseSharedCrew ] = useStateWithStorage('tools/useSharedCrew', true);
+	const [sharedCrew, setSharedCrew] = useStateWithStorage<PlayerCrew | undefined>('eventplanner/sharedCrew', undefined);
+	
 	events.forEach((activeEvent, eventId) => {
 		eventsList.push(
 			{
@@ -168,6 +172,7 @@ const EventPicker = (props: EventPickerProps) => {
 			let prospect = JSON.parse(JSON.stringify(crew)) as PlayerCrew;
 			prospect.id = myCrew.length+1;
 			prospect.prospect = true;
+			prospect.statusIcon = "add user";
 			prospect.have = false;
 			prospect.rarity = p.rarity;
 			prospect.level = 100;
@@ -193,6 +198,33 @@ const EventPicker = (props: EventPickerProps) => {
 		}
 	});
 
+	let newSharedCrew = (playerData.player.character.crew_borrows?.length && playerData?.player?.squad?.rank !== "LEADER") ? playerData.player.character.crew_borrows[0] : undefined;
+	if (sharedCrew && typeof sharedCrew.dateShared === 'string') {
+		sharedCrew.dateShared = new Date (sharedCrew.dateShared);
+	}
+	if (useSharedCrew && newSharedCrew && (!sharedCrew || sharedCrew.symbol !== newSharedCrew.symbol)) {
+		console.debug("Found shared crew");
+		newSharedCrew = {...allCrew.find(c => c.symbol == newSharedCrew?.symbol), ...newSharedCrew } as PlayerCrew;
+		applyCrewBuffs(newSharedCrew, buffConfig);		
+		newSharedCrew.dateShared = new Date();
+		newSharedCrew.shared = true;
+		newSharedCrew.statusIcon = "share alternate";
+		newSharedCrew.have = false;
+		newSharedCrew.id = myCrew.length + 1;
+		setSharedCrew(newSharedCrew);
+		myCrew.push(newSharedCrew);
+	} 
+	else if (sharedCrew && (!useSharedCrew || playerData?.player?.squad?.rank === "LEADER")) {
+		setSharedCrew(undefined);
+	}
+	else if (sharedCrew && !!sharedCrew.dateShared && ((Date.now() - sharedCrew.dateShared.getTime()) / (1000 * 60 * 60 * 24)) > 4) { 
+		// Event has finished so delete shared crew
+		setSharedCrew(undefined);
+	}
+	else if (sharedCrew && !myCrew.find(mcf => mcf.symbol === sharedCrew.symbol && mcf.shared)) {
+		myCrew.push(sharedCrew);
+	}
+
 	return (
 		<React.Fragment>
 			<Form>
@@ -207,7 +239,7 @@ const EventPicker = (props: EventPickerProps) => {
 				<div>{eventData.description}</div>
 				{phaseList.length > 1 && (<div style={{ margin: '1em 0' }}>Select a phase: <Dropdown selection options={phaseList} value={phaseIndex} onChange={(e, { value }) => setPhaseIndex(value as number) } /></div>)}
 			</Form>
-			<EventCrewTable allCrew={allCrew} crew={myCrew} eventData={eventData} phaseIndex={phaseIndex} buffConfig={buffConfig} lockable={lockable} />
+			<EventCrewTable allCrew={allCrew} crew={myCrew} eventData={eventData} phaseIndex={phaseIndex} buffConfig={buffConfig} lockable={lockable} useSharedCrew={useSharedCrew} setUseSharedCrew={setUseSharedCrew} />
 			<EventProspects pool={allBonusCrew} prospects={prospects} setProspects={setProspects} />
 			{eventData.content_types[phaseIndex] === 'shuttles' && (<EventShuttles playerData={playerData} crew={myCrew} eventData={eventData} />)}
 		</React.Fragment>
@@ -217,27 +249,33 @@ const EventPicker = (props: EventPickerProps) => {
 type EventCrewTableProps = {
 	allCrew: (CrewMember | PlayerCrew)[];
 	crew: PlayerCrew[];
-	eventData: any;
+	eventData: GameEvent;
 	phaseIndex: number;
 	buffConfig: BuffStatTable;
-	lockable?: any[];
+	lockable?: LockedProspect[];
+	useSharedCrew: boolean;
+	setUseSharedCrew: (value: boolean) => void;
 };
 
 const EventCrewTable = (props: EventCrewTableProps) => {
 	const { allCrew, eventData, phaseIndex, buffConfig } = props;
-
+	const context = React.useContext(GlobalContext);
+	const { playerData } = context.player;
+	
 	const [showBonus, setShowBonus] = useStateWithStorage('eventplanner/showBonus', true);
 	const [applyBonus, setApplyBonus] = useStateWithStorage('eventplanner/applyBonus', true);
 	const [showPotential, setShowPotential] = useStateWithStorage('eventplanner/showPotential', false);
 	const [showFrozen, setShowFrozen] = useStateWithStorage('eventplanner/showFrozen', true);
-	const [initOptions, setInitOptions] = React.useState<InitialOptions>({});
+	const [initOptions, setInitOptions] = React.useState({} as InitialOptions);
+	const { useSharedCrew, setUseSharedCrew } = props;
+
 	const crewAnchor = React.useRef<HTMLDivElement>(null);
 
 	React.useEffect(() => {
 		setInitOptions({});
 	}, [eventData, phaseIndex]);
 
-	if (eventData.bonus.length === 0)
+	if (eventData.bonus?.length === 0)
 		return (
 			<div style={{ marginTop: '1em' }}>
 				Featured crew not yet identified for this event.
@@ -294,7 +332,7 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 	let myCrew = JSON.parse(JSON.stringify(props.crew));
 
 	// Filter crew by bonus, frozen here instead of searchabletable callback so matrix can use filtered crew list
-	if (showBonus) myCrew = myCrew.filter((c) => eventData.bonus.indexOf(c.symbol) >= 0);
+	if (showBonus) myCrew = myCrew.filter((c) => (eventData.bonus?.indexOf(c.symbol) ?? 0) >= 0);
 	if (!showFrozen) myCrew = myCrew.filter((c) => c.immortal <= 0);
 
 	const getPairScore = (crew: any, primary: string, secondary: string) => {
@@ -310,11 +348,11 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 		// First adjust skill scores as necessary
 		if (applyBonus || showPotential) {
 			crew.bonus = 1;
-			if (applyBonus && eventData.featured.indexOf(crew.symbol) >= 0) {
+			if (applyBonus && eventData?.featured_crew?.indexOf(crew.symbol) >= 0) {
 				if (phaseType === 'gather') crew.bonus = 10;
 				else if (phaseType === 'shuttles') crew.bonus = 3;
 			}
-			else if (applyBonus && eventData.bonus.indexOf(crew.symbol) >= 0) {
+			else if (applyBonus && (eventData.bonus?.indexOf(crew.symbol) ?? 0) >= 0) {
 				if (phaseType === 'gather') crew.bonus = 5;
 				else if (phaseType === 'shuttles') crew.bonus = 2;
 			}
@@ -401,6 +439,15 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 						checked={showFrozen}
 						onChange={(e, { checked }) => setShowFrozen(checked)}
 					/>
+					{playerData?.player?.squad?.rank !== "LEADER" && <Form.Checkbox 
+						checked={useSharedCrew}
+						onChange={({}, { checked }) => setUseSharedCrew(checked ?? false)}
+						label={
+							<label>
+								Use shared crew<Popup content='Note: Crew numbers are based on user buffs and may not match actual score' trigger={<Icon name='info' />} />
+							</label>
+						}
+					/>}
 				</Form.Group>
 			</div>
 			<SearchableTable
@@ -434,10 +481,11 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 							gridGap: '1px'
 						}}
 					>
-						<div style={{ gridArea: 'icon' }}>
+						<div style={{ gridArea: 'icon', display: "flex", flexDirection: "row", alignItems: "flex-end" }}>
 							<CrewTarget targetGroup='eventTarget' inputItem={crew} >
-								<img width={48} src={`${process.env.GATSBY_ASSETS_URL}${crew.imageUrlPortrait}`} />
+								<img width={48} src={`${process.env.GATSBY_ASSETS_URL}${crew.imageUrlPortrait}`} />								
 							</CrewTarget>
+							{crew.statusIcon === "share alternate" && <Icon style={{margin:"0 0 0.5em -0.25em"}} name={crew.statusIcon} size='small' />}
 						</div>
 						<div style={{ gridArea: 'stats' }}>
 							<span style={{ fontWeight: 'bolder', fontSize: '1.25em' }}><Link to={`/crew/${crew.symbol}/`}>{crew.name}</Link></span>
@@ -581,6 +629,8 @@ const EventCrewMatrix = (props: EventCrewMatrixProps) => {
 			let icon = (<></>);
 			if (bestCrew && bestCrew.immortal > 0) icon = (<Icon name='snowflake' />);
 			if (bestCrew && bestCrew.prospect) icon = (<Icon name='add user' />);
+			if (bestCrew?.statusIcon) icon = (<Icon name={bestCrew.statusIcon} />);
+			
 			return (
 				<Table.Cell key={key} textAlign='center' style={{ cursor: 'zoom-in' }} onClick={() => handleClick(skillA, skillB)}>
 				<CrewTarget inputItem={bestCrew} targetGroup='eventTarget'>

@@ -25,6 +25,53 @@ export function stripPlayerData(items: PlayerEquipmentItem[], p: PlayerData): an
     if ("seconds_to_scan_cooldown" in p.player.character) delete p.player.character.seconds_to_scan_cooldown;
     if ("scan_speedups_today" in p.player.character) delete p.player.character.scan_speedups_today;
 
+    delete p.player.character.navmap;
+	delete p.player.character.tutorials;
+	delete p.player.character.shuttle_adventures;
+	delete p.player.character.voyage;
+	delete p.player.character.voyage_descriptions;
+	delete p.player.character.voyage_summaries;
+	delete p.player.character.boost_windows;
+	delete p.player.character.cadet_schedule;
+	delete p.player.character.cadet_tickets;
+	delete p.player.character.daily_rewards_state;
+	delete p.player.character.location;
+	delete p.player.character.destination;
+	delete p.player.character.video_ad_chroniton_boost_reward;
+	delete p.player.character.pvp_tickets;
+	delete p.player.character.event_tickets;
+	delete p.player.character.pvp_divisions;
+	delete p.player.character.pvp_timer;
+	delete p.player.character.fleet_activities;
+	delete p.player.character.honor_reward_by_rarity;
+	delete p.player.character.using_default_name;
+	delete p.player.character.max_level;
+	delete p.player.character.active_conflict;
+	delete p.player.character.next_shuttle_bay_cost;
+	delete p.player.character.can_purchase_shuttle_bay;
+	delete p.player.character.replay_energy_rate;
+	delete p.player.character.seconds_from_replay_energy_basis;
+	delete p.player.character.seconds_from_last_boost_claim; 
+	delete p.player.character.crew_shares;
+	delete p.player.character.crew_limit_increase_per_purchase;
+	delete p.player.character.next_crew_limit_increase_cost;
+	delete p.player.character.can_purchase_crew_limit_increase;
+	delete p.player.character.item_limit;
+	delete p.player.character.disputes;
+	delete p.player.character.tng_the_game_level;
+	delete p.player.character.open_packs;
+	delete p.player.character.next_daily_activity_reset;
+	delete p.player.character.next_starbase_donation_reset;
+	delete p.player.character.next_fleet_activity_reset;
+	delete p.player.character.freestanding_quests;
+	delete p.player.character.stimpack;
+	delete p.player.character.location_channel_prefix;
+	delete p.player.character.events;
+	
+	if ("archetype_cache" in p){
+		delete p.archetype_cache;
+	}
+
     delete p.player.character.active_conflict;
     delete p.player.character.next_shuttle_bay_cost;
     
@@ -61,8 +108,8 @@ export function stripPlayerData(items: PlayerEquipmentItem[], p: PlayerData): an
     delete p.player.character.replay_energy_rate;
     delete p.player.character.seconds_from_replay_energy_basis;
     delete p.player.character.seconds_from_last_boost_claim;
-    delete p.player.character.crew_borrows;
-    delete p.player.character.crew_shares;
+    // delete p.player.character.crew_borrows;
+    // delete p.player.character.crew_shares;
     delete p.player.character.crew_limit_increase_per_purchase;
     delete p.player.character.next_crew_limit_increase_cost;
     delete p.player.character.can_purchase_crew_limit_increase;

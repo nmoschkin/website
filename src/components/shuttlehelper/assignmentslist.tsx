@@ -62,12 +62,13 @@ const AssignmentsList = (props: AssignmentsListProps) => {
 					{!assignedCrew && (<span style={{ color: 'gray' }}>(Open seat)</span>)}
 				</Table.Cell>
 				<Table.Cell>
-					{assignedCrew && (
+					{assignedCrew && !assignedCrew.statusIcon && (
 						<React.Fragment>
 							{assignedCrew.immortal > 0 && (<Icon name='snowflake' />)}
 							{assignedCrew.prospect && (<Icon name='add user' />)}
 						</React.Fragment>
 					)}
+					{assignedCrew?.statusIcon && <Icon name={assignedCrew.statusIcon} />}
 				</Table.Cell>
 				<Table.Cell textAlign='center' width={3}>
 					{assignedCrew && (
@@ -192,8 +193,7 @@ const AssignmentsList = (props: AssignmentsListProps) => {
 					</Table.Cell>
 					<Table.Cell><SeatCrewView crew={crew} /></Table.Cell>
 					<Table.Cell>
-						{crew.immortal > 0 && (<Icon name='snowflake' />)}
-						{crew.prospect && (<Icon name='add user' />)}
+						{crew.statusIcon && (<Icon name={crew.statusIcon} />)}
 					</Table.Cell>
 					<Table.Cell textAlign='center'>
 						{renderScoreChange(shuttleId, seatNum, crew.score)}
