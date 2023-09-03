@@ -435,7 +435,7 @@ const EventCrewTable = (props: EventCrewTableProps) => {
 						checked={showFrozen}
 						onChange={(e, { checked }) => setShowFrozen(checked)}
 					/>
-					{playerData?.player.squad.rank !== "LEADER" && <Form.Checkbox 
+					{playerData?.player?.squad?.rank !== "LEADER" && <Form.Checkbox 
 						checked={useSharedCrew}
 						onChange={({}, { checked }) => setUseSharedCrew(checked ?? false)}
 						label={
