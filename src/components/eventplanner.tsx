@@ -198,7 +198,7 @@ const EventPicker = (props: EventPickerProps) => {
 	if (sharedCrew && typeof sharedCrew.dateShared === 'string') {
 		sharedCrew.dateShared = new Date (sharedCrew.dateShared);
 	}
-	if (!sharedCrew && useSharedCrew && newSharedCrew) {
+	if (useSharedCrew && newSharedCrew && (!sharedCrew || sharedCrew.symbol !== newSharedCrew.symbol)) {
 		console.debug("Found shared crew");
 		newSharedCrew = {...allCrew.find(c => c.symbol == newSharedCrew?.symbol), ...newSharedCrew } as PlayerCrew;
 		applyCrewBuffs(newSharedCrew, buffConfig);		
