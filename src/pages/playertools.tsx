@@ -1,7 +1,6 @@
 import React from 'react';
 import { Header, Message, Tab, Icon, Dropdown, Menu, Button, Form, TextArea, Checkbox, Modal, Progress, Popup } from 'semantic-ui-react';
 
-import Layout from '../components/layout';
 import ProfileCrew from '../components/profile_crew';
 import ProfileCrewMobile from '../components/profile_crew2';
 import ProfileShips from '../components/profile_ships';
@@ -27,7 +26,7 @@ import { Ship } from '../model/ship';
 import { GlobalContext } from '../context/globalcontext';
 import { BuffStatTable } from '../utils/voyageutils';
 import { EquipmentItem } from '../model/equipment';
-import DataPageLayout from '../components/datapagelayout';
+import DataPageLayout from '../components/page/datapagelayout';
 import { EphemeralData } from '../context/playercontext';
 import { navigate } from 'gatsby';
 
@@ -114,7 +113,7 @@ export const playerTools: PlayerTools = {
 const PlayerToolsPage = (props: any) => {
 
 	return (
-		<DataPageLayout header='Player Tools' demands={['ship_schematics', 'crew', 'items', 'skill_bufs','cadet']}>
+		<DataPageLayout pageTitle='Player Tools' demands={['ship_schematics', 'crew', 'items', 'skill_bufs','cadet']} playerPromptType='require'>
 				<PlayerToolsComponent location={props.location} />
 		</DataPageLayout>
 	);
@@ -126,11 +125,11 @@ export interface PlayerToolsProps {
 
 const PlayerToolsComponent = (props: PlayerToolsProps) => {
 	const mergedContext = React.useContext(GlobalContext);
-	// The context above	
-	
+	// The context above
+
 	const { playerShips, playerData } = mergedContext.player;
 	const { dataSource, ephemeral } = mergedContext.player;
-	
+
 	// Profile data ready, show player tool panes
 	if (playerData && dataSource && dataSource && ephemeral && playerShips) {
 		return (<PlayerToolsPanes />);

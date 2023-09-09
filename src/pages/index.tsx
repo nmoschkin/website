@@ -1,15 +1,14 @@
 import React, { Component } from 'react';
-import { Header, Table, Rating, Icon } from 'semantic-ui-react';
+import { Header, Table, Rating, Icon, Step } from 'semantic-ui-react';
 import { Link } from 'gatsby';
 
 import { GlobalContext } from '../context/globalcontext';
-import Layout from '../components/layout';
-import DataPageLayout from '../components/datapagelayout';
+import DataPageLayout from '../components/page/datapagelayout';
 import { SearchableTable, ITableConfigRow, initSearchableOptions, initCustomOption, prettyCrewColumnTitle } from '../components/searchabletable';
 import Announcement from '../components/announcement';
 
 import CONFIG from '../components/CONFIG';
-import { formatTierLabel, isImmortal, prepareProfileData, printPortalStatus } from '../utils/crewutils';
+import { applyCrewBuffs, formatTierLabel, getSkills, isImmortal, prepareProfileData, printPortalStatus } from '../utils/crewutils';
 
 import { crewMatchesSearchFilter } from '../utils/crewsearch';
 import CABExplanation from '../components/cabexplanation';
@@ -18,6 +17,8 @@ import { CrewHoverStat, CrewTarget } from '../components/hovering/crewhoverstat'
 import { CompletionState, PlayerCrew, PlayerData } from '../model/player';
 import { TinyStore } from '../utils/tiny';
 import { descriptionLabel } from '../components/crewtables/commonoptions';
+import ProfileCrew from '../components/profile_crew';
+import { useStateWithStorage } from '../utils/storage';
 
 const rarityLabels = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary'];
 
@@ -30,12 +31,158 @@ interface Lockable {
 	name: string;
 };
 
+export interface CrewViewMode {
+	hasPlayer: number;
+	noPlayer: number;
+	playerAllowedModes: number[];
+	noPlayerAllowedModes: number[];
+}
+
 const IndexPage = (props: IndexPageProps) => {
+
+	const context = React.useContext(GlobalContext);
+	const playerPresent = !!context.player.playerData?.player?.character?.crew?.length;
+
+	const [buffMode, setBuffMode] = useStateWithStorage<string | undefined>('indexBoosts', "Max Boosts");
+
+	const defaultMode = {
+		hasPlayer: 1,
+		noPlayer: 0,
+		playerAllowedModes: [0, 1, 2],
+		noPlayerAllowedModes: [0]
+	} as CrewViewMode;
+
+	const [stepMode, setStepMode] = useStateWithStorage<CrewViewMode>('indexMode', defaultMode, { rememberForever: true });
+	const [altRoster, setAltRoster] = React.useState<PlayerCrew[] | undefined>([]);
+
+	const maxBuffs = context.maxBuffs;
+	const playerBuffs = context.player.buffConfig;
+	const hasPlayer = !!context.player.playerData?.player?.character?.crew?.length;
+
+	if (!stepMode.noPlayerAllowedModes?.length || !stepMode.playerAllowedModes?.length) {
+		throw new Error("Cannot initialize with no allowable modes!");
+	}
+
+	const getMode = () => {
+		if (hasPlayer) return stepMode.hasPlayer;
+		else return stepMode.noPlayer;
+	}
+
+	const setMode = (mode: number) => {
+		setAltRoster([]);
+		window.setTimeout(() => {
+			if (hasPlayer) {
+				if (!stepMode.playerAllowedModes.includes(mode)) {
+					setStepMode({ ... stepMode, hasPlayer: stepMode.playerAllowedModes[0] });
+				}
+				else {
+					setStepMode({ ... stepMode, hasPlayer: mode });
+				}
+			}
+			else {
+				if (!stepMode.noPlayerAllowedModes.includes(mode)) {
+					setStepMode({ ... stepMode, noPlayer: stepMode.noPlayerAllowedModes[0] });
+				}
+				else {
+					setStepMode({ ... stepMode, noPlayer: mode });
+				}
+			}
+		});
+	}
+
+	const mode = getMode();
+
+	React.useEffect(() => {
+
+		const newRoster = context.core.crew.map(crew => {
+			let map = {
+				... JSON.parse(JSON.stringify(crew)),
+				immortal: CompletionState.DisplayAsImmortalStatic,
+				level: crew.max_level,
+				rarity: crew.max_rarity,
+				have: false,
+				command_skill: { core: 0, min: 0, max: 0 },
+				medicine_skill: { core: 0, min: 0, max: 0 },
+				security_skill: { core: 0, min: 0, max: 0 },
+				diplomacy_skill: { core: 0, min: 0, max: 0 },
+				engineering_skill: { core: 0, min: 0, max: 0 },
+				science_skill: { core: 0, min: 0, max: 0 },
+			} as PlayerCrew;
+
+			if (hasPlayer && mode !== 0) {
+				let pc = context.player.playerData?.player?.character?.crew?.find(f => f.symbol === crew.symbol);
+				if (pc) {
+					map = { ... map, ... JSON.parse(JSON.stringify(pc)) };
+					map.have = true;
+				}
+				else {
+					map.rarity = 0;
+				}
+			}
+			for (let skill of getSkills(crew)) {
+				if (!(skill in map) || !map[skill].core) map[skill] = {
+					core: crew.base_skills[skill].core,
+					max: crew.base_skills[skill].range_max,
+					min: crew.base_skills[skill].range_min,
+				}
+				map.skills ??= {};
+				if (!(skill in map.skills)) map.skills[skill] = { ... crew.base_skills[skill] };
+			}
+			if (buffMode === 'Max Boosts' && maxBuffs) {
+				applyCrewBuffs(map, maxBuffs);
+			}
+			else if (buffMode === 'Player Boosts' && playerBuffs && hasPlayer) {
+				applyCrewBuffs(map, playerBuffs);
+			}
+
+			return map;
+		}).filter(fc => mode !== 1 || fc.have);
+		setAltRoster(newRoster);
+
+	}, [stepMode, buffMode, context]);
+
 	return (
-		<DataPageLayout>
+		<DataPageLayout pageTitle='Crew Stats' playerPromptType='recommend'>
+
+
 			<React.Fragment>
 				<Announcement />
-				<CrewStats location={props.location} />
+
+				<Step.Group fluid>
+					<Step active={mode === 0} onClick={() => setMode(0)}>
+						<Icon name='game' />
+						<Step.Content>
+							<Step.Title>Game Roster</Step.Title>
+							<Step.Description>Overview of all crew in the game.</Step.Description>
+						</Step.Content>
+					</Step>
+					<Step disabled={!hasPlayer} active={mode === 1} onClick={() => setMode(1)}>
+						<img src='/media/crew_icon.png' style={{width:"3em", marginRight: "1em"}} />
+						<Step.Content>
+							<Step.Title>Owned Crew</Step.Title>
+							<Step.Description>View only your owned crew.</Step.Description>
+						</Step.Content>
+					</Step>
+					<Step disabled={!hasPlayer} active={mode === 2} onClick={() => setMode(2)}>
+						<Icon name='table' />
+						<Step.Content>
+							<Step.Title>All Crew</Step.Title>
+							<Step.Description>View all crew and owned status.</Step.Description>
+						</Step.Content>
+					</Step>
+				</Step.Group>
+
+				{(!altRoster?.length) && <div style={{height: "100vh", display: "flex", flexDirection: "column", alignItems: "center"}}>{context.core.spin ? context.core.spin() : <></>}</div> ||
+				<ProfileCrew
+					buffMode={buffMode}
+					setBuffMode={setBuffMode}
+					showUnownedCrew={mode === 2}
+					setShowUnownedCrew={undefined}
+					isTools={playerPresent}
+					hideAdvancedTools={mode !== 1}
+					location={"/"}
+					alternateRoster={altRoster} />}
+				{/* <CrewStats location={props.location} /> */}
 			</React.Fragment>
 		</DataPageLayout>
 	);
@@ -277,9 +424,9 @@ class CrewStats extends Component<CrewStatsProps, CrewStatsState> {
 
 		if (!botcrew || botcrew.length === 0) {
 			return (
-				<Layout>
+				<React.Fragment>
 					<Icon loading name='spinner' /> Loading...
-				</Layout>
+				</React.Fragment>
 			);
 		}
 

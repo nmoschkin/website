@@ -35,14 +35,22 @@ const isWindow = typeof window !== 'undefined';
 
 export type ProfileCrewProps = {
 	isTools?: boolean;
+	hideAdvancedTools?: boolean;
 	location: any;
 	pageId?: string;
+
 	alternateRoster?: PlayerCrew[];
+
+	showUnownedCrew?: boolean;
+	setShowUnownedCrew?: (value: boolean | undefined) => void;
+
+	buffMode?: string;
+	setBuffMode?: (value: string | undefined) => void
 };
 
 const ProfileCrew = (props: ProfileCrewProps) => {
 	const context = React.useContext(GlobalContext);
-
+	
 	const { playerData, playerShips } = context.player;
 	const { crew } = context.core;
 
@@ -61,12 +69,20 @@ const ProfileCrew = (props: ProfileCrewProps) => {
 
 	const allCrew = [...crew ?? []].sort((a, b)=>a.name.localeCompare(b.name));
 
-	if (props.isTools && playerData) {
-		const buffConfig = calculateBuffConfig(playerData.player);
+	if (props.isTools && (playerData || props.alternateRoster)) {
+		
+		const buffConfig = playerData ? calculateBuffConfig(playerData.player) : context.maxBuffs as BuffStatTable;
+		
 		return (
-			<ProfileCrewTools pageId={pageId} playerData={playerData} myCrew={myCrew} allCrew={allCrew} buffConfig={buffConfig}
+			<ProfileCrewTools 
+				hideAdvancedTools={props.hideAdvancedTools}
+				buffMode={props.buffMode}
+				setBuffMode={props.setBuffMode}
+				showUnownedCrew={props.showUnownedCrew}
+				setShowUnownedCrew={props.setShowUnownedCrew} 
+				pageId={pageId} playerData={playerData} myCrew={myCrew} allCrew={allCrew} buffConfig={buffConfig}
 				ships={playerShips} initOptions={initOptions} initHighlight={initHighlight} initProspects={initProspects}
-				dbid={`${playerData.player.dbid}`} />
+				dbid={`${playerData?.player.dbid}`} />
 		);
 	}
 
@@ -81,8 +97,18 @@ const ProfileCrew = (props: ProfileCrewProps) => {
 		}
 	}
 
-	if (playerData) {
-		return (<ProfileCrewTable pageId={pageId} playerData={playerData} crew={myCrew} allCrew={allCrew} initOptions={initOptions} lockable={lockable} />);
+	if (playerData || props.alternateRoster) {
+		return (<ProfileCrewTable
+			buffMode={props.buffMode}
+			setBuffMode={props.setBuffMode}
+			showUnownedCrew={props.showUnownedCrew}
+			setShowUnownedCrew={props.setShowUnownedCrew} 
+			pageId={pageId} 
+			playerData={playerData} 
+			crew={myCrew} 
+			allCrew={allCrew} 
+			initOptions={initOptions} 
+			lockable={lockable} />);
 	}	
 	else return <></>;
 };
@@ -91,13 +117,20 @@ type ProfileCrewToolsProps = {
 	myCrew: PlayerCrew[];
 	allCrew: CrewMember[];
 	ships?: Ship[];
-	playerData: PlayerData;
+	playerData?: PlayerData;
 	buffConfig: BuffStatTable;
 	initOptions?: InitialOptions;
 	initHighlight: string;
 	initProspects: string[];
 	dbid: string;
 	pageId?: string;
+	hideAdvancedTools?: boolean;
+	
+	showUnownedCrew?: boolean;	
+	setShowUnownedCrew?: (value: boolean | undefined) => void;
+
+	buffMode?: string;
+	setBuffMode?: (value: string | undefined) => void;
 };
 
 const ProfileCrewTools = (props: ProfileCrewToolsProps) => {
@@ -135,7 +168,7 @@ const ProfileCrewTools = (props: ProfileCrewToolsProps) => {
 	const lockable = [] as LockedProspect[];
 
 	React.useEffect(() => {
-		if (props.initProspects?.length > 0) {
+		if (!props.hideAdvancedTools && props.initProspects?.length > 0) {
 			const newProspects = [] as LockedProspect[];
 			props.initProspects.forEach(p => {
 				const newProspect = allCrew.find(c => c.symbol === p) as PlayerCrew | undefined;
@@ -156,7 +189,7 @@ const ProfileCrewTools = (props: ProfileCrewToolsProps) => {
 		}
 	}, [props.initProspects]);
 
-	prospects?.forEach((p) => {
+	(props.hideAdvancedTools ? [] : prospects)?.forEach((p) => {
 		let crew = allCrew.find((c) => c.symbol == p.symbol);
 		if (crew) {
 			let prospect = oneCrewCopy(crew) as PlayerCrew;
@@ -192,7 +225,7 @@ const ProfileCrewTools = (props: ProfileCrewToolsProps) => {
 		}
 	});
 
-	if (props.initHighlight != '') {
+	if (!props.hideAdvancedTools && props.initHighlight != '') {
 		const highlighted = myCrew.find(c => c.symbol === props.initHighlight);
 		if (highlighted) {
 			lockable.push({
@@ -210,33 +243,36 @@ const ProfileCrewTools = (props: ProfileCrewToolsProps) => {
 
 	return (
 		<React.Fragment>
-			<ProfileCrewTable ships={ships} allCrew={allCrew} playerData={props.playerData} pageId={pageId ?? 'crewTool'} crew={myCrew} initOptions={initOptions} lockable={lockable} wizard={wizard} />
-			{!(pageId?.includes("profile_")) &&
+			<ProfileCrewTable 
+				buffMode={props.buffMode}
+				setBuffMode={props.setBuffMode}
+				showUnownedCrew={props.showUnownedCrew}
+				setShowUnownedCrew={props.setShowUnownedCrew}
+				ships={ships} 
+				allCrew={allCrew} 
+				playerData={props.playerData} 
+				pageId={pageId ?? 'crewTool'} 
+				crew={myCrew} 
+				initOptions={initOptions} 
+				lockable={lockable} 
+				wizard={wizard} />
+			{!(pageId?.includes("profile_")) && !props.hideAdvancedTools &&
 				<Prospects pool={props.allCrew} prospects={prospects} setProspects={setProspects} />}
+			{!props.hideAdvancedTools && <>
 			<Header as='h3'>Advanced Analysis</Header>
 			<RosterSummary myCrew={myCrew} allCrew={props.allCrew} buffConfig={buffConfig} />
 			<UtilityWizard myCrew={myCrew} handleWizard={(wizardData: any) => setWizard({...wizardData})} dbid={props.dbid} />
+			</>}
 			<div style={{height: "2em"}}>&nbsp;</div>
 		</React.Fragment>
 	);
-
-	// function applySkillBuff(buffConfig: any, skill: string, base_skill: any): { core: number, min: number, max: number } {
-	// 	const getMultiplier = (skill: string, stat: string) => {
-	// 		return buffConfig[`${skill}_${stat}`].multiplier + buffConfig[`${skill}_${stat}`].percent_increase;
-	// 	};
-	// 	return {
-	// 		core: Math.round(base_skill.core*getMultiplier(skill, 'core')),
-	// 		min: Math.round(base_skill.range_min*getMultiplier(skill, 'range_min')),
-	// 		max: Math.round(base_skill.range_max*getMultiplier(skill, 'range_max'))
-	// 	};
-	// }
 };
 
 
 export type ProfileCrewTableProps = {
 	pageId?: string;
 
-	playerData: PlayerData;
+	playerData?: PlayerData;
 	crew: PlayerCrew[];
 	allCrew: CrewMember[];
 	ships?: Ship[];
@@ -250,6 +286,12 @@ export type ProfileCrewTableProps = {
 
 	/** Custom filter content (the widgets, drop-downs, text inputs and other filter options) */
 	customFilters?: CrewTableCustomFilter[];
+
+	showUnownedCrew?: boolean;	
+	setShowUnownedCrew?: (value: boolean | undefined) => void;
+
+	buffMode?: string;
+	setBuffMode?: (value: string | undefined) => void;
 };
 
 
@@ -290,6 +332,7 @@ export const ProfileCrewTable = (props: ProfileCrewTableProps) => {
 	const [focusedCrew, setFocusedCrew] = React.useState<PlayerCrew | CrewMember | undefined | null>(undefined);
 	
 	const myCrew = props.crew; 
+	const hasPlayer = !!props.playerData?.player?.character?.crew?.length;
 
 	const makeUses = (crew: (PlayerCrew | CrewMember)[]) => {
 		let uses = crew.map((item) => item.action.limit ?? 0);
@@ -730,6 +773,17 @@ export const ProfileCrewTable = (props: ProfileCrewTableProps) => {
 
 		});
 	}
+	
+	const setPlayerBoosts = (e: string | undefined) => {
+		if (props.setBuffMode) props.setBuffMode(e);
+	}
+
+	const toggleUnowned = (e: boolean | undefined) => {
+		if (props.setShowUnownedCrew) props.setShowUnownedCrew(e);
+	}
+
+	const availableModes = hasPlayer ? ['Unboosted', 'Player Boosts', 'Max Boosts'] : ['Unboosted', 'Max Boosts'];
+	if (!hasPlayer && props.buffMode === 'Player Boosts') props.buffMode = 'Unboosted';
 
 	return (
         <React.Fragment>
@@ -900,6 +954,14 @@ export const ProfileCrewTable = (props: ProfileCrewTableProps) => {
             </div>
 
             <SearchableTable
+				checkCaption={"Show Unowned Crew"}
+				checkableEnabled={!!props.playerData}
+				checkableValue={props.showUnownedCrew}
+				setCheckableValue={ props.setShowUnownedCrew ? (e) => toggleUnowned(e) : undefined}
+				toolCaption={"Buff Mode"}
+				dropDownChoices={availableModes}
+				dropDownValue={props.buffMode}
+				setDropDownValue={(e) => setPlayerBoosts(e)}
                 id={`${pageId}/table_`}
                 data={myCrew}
                 config={tableConfig}

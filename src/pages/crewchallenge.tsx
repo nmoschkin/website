@@ -7,6 +7,7 @@ import Layout from '../components/layout';
 import { useStateWithStorage } from '../utils/storage';
 import { PlayerCrew } from '../model/player';
 import { BaseSkills, Skill } from '../model/crew';
+import DataPageLayout from '../components/page/datapagelayout';
 
 const PAGE_TITLE = 'Worfle Crew Challenge';
 const GAME_NAME = 'Worfle';
@@ -130,19 +131,20 @@ const CrewChallengeLayout = () => {
 	];
 
 	return (
-		<Layout title={PAGE_TITLE}>
-			<Header as='h2'>{PAGE_TITLE}</Header>
-			<Menu>
-				{menuItems.map(item => (
-					<Menu.Item key={item.name} name={item.name} active={activeItem === item.name} onClick={() => setActiveItem(item.name)}>
-						{item.title}
-					</Menu.Item>
-				))}
-			</Menu>
-			{activeItem === 'daily' && <DailyGame />}
-			{activeItem === 'practice' && <PracticeGame />}
-			{activeItem === 'instructions' && renderInstructions()}
-		</Layout>
+		<DataPageLayout pageTitle={PAGE_TITLE}>
+			<React.Fragment>
+				<Menu>
+					{menuItems.map(item => (
+						<Menu.Item key={item.name} name={item.name} active={activeItem === item.name} onClick={() => setActiveItem(item.name)}>
+							{item.title}
+						</Menu.Item>
+					))}
+				</Menu>
+				{activeItem === 'daily' && <DailyGame />}
+				{activeItem === 'practice' && <PracticeGame />}
+				{activeItem === 'instructions' && renderInstructions()}
+			</React.Fragment>
+		</DataPageLayout>
 	);
 
 	function renderInstructions(): JSX.Element {

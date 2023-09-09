@@ -7,7 +7,7 @@ import { CrewMember } from '../model/crew';
 import { Collection } from '../model/game-elements';
 import { GlobalContext } from '../context/globalcontext';
 import { formatColString } from '../components/item_presenters/crew_preparer';
-import DataPageLayout from '../components/datapagelayout';
+import DataPageLayout from '../components/page/datapagelayout';
 import CONFIG from '../components/CONFIG';
 
 type CollectionsPageProps = {};
@@ -67,7 +67,7 @@ class CollectionsPageComponent extends PureComponent<CollectionsPageProps, Colle
 		const { collections, allcrew } = this.state;
 
 		if (!collections || collections.length === 0) {
-			return this.context.core.spin();
+			return this.context.core.spin ? this.context.core.spin() : <></>;
 		}
 
 		return (
