@@ -74,7 +74,7 @@ export function stripPlayerData(items: PlayerEquipmentItem[], p: PlayerData): an
 
     delete p.player.character.active_conflict;
     delete p.player.character.next_shuttle_bay_cost;
-    
+
     delete p.fleet_boss_battles_root;
 	delete p.captains_bridge_root;
 	delete p.scanning_root;
@@ -82,7 +82,7 @@ export function stripPlayerData(items: PlayerEquipmentItem[], p: PlayerData): an
 	delete p.objective_event_root;
     delete p.archetype_cache;
     delete p.item_archetype_cache;
-    
+
     delete p.player.character.navmap;
     delete p.player.character.tutorials;
     delete p.player.character.shuttle_adventures;
