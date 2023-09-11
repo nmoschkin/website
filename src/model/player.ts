@@ -1141,6 +1141,7 @@ export interface Player {
     progressPct?: number;
     neededPct?: number;
     needed?: number;
+    neededCost?: number;
     totalRewards?: number;
     owned: number;
   }
