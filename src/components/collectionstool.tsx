@@ -373,6 +373,7 @@ const CrewTable = (props: CrewTableProps) => {
 		ownedFilterOptions.push({ key: 'owned', value: 'owned', text: 'Only show owned crew' })
 	}
 	ownedFilterOptions.push({ key: 'owned-impact', value: 'owned-impact', text: 'Only show crew needing 1 fuse' });
+	ownedFilterOptions.push({ key: 'owned-threshold', value: 'owned-threshold', text: 'Only show crew needing 1 or 2 fuses' });
 	ownedFilterOptions.push({ key: 'owned-ff', value: 'owned-ff', text: 'Only show fully fused crew' });
 
 	const fuseFilterOptions = [
@@ -419,6 +420,7 @@ const CrewTable = (props: CrewTableProps) => {
 	const checkCommonFilter = (crew: PlayerCrew, exclude?: string[]) => {
 		if (!exclude?.includes('unowned') && ownedFilter === 'unowned' && (crew.highest_owned_rarity ?? 0) > 0) return false;
 		if (!exclude?.includes('owned') && ownedFilter.slice(0, 5) === 'owned' && crew.highest_owned_rarity === 0) return false;
+		if (!exclude?.includes('owned-threshold') && ownedFilter === 'owned-threshold' && (crew.max_rarity - (crew.highest_owned_rarity ?? crew.rarity ?? 0)) > 2) return false;
 		if (!exclude?.includes('owned-impact') && ownedFilter === 'owned-impact' && (crew.max_rarity - (crew.highest_owned_rarity ?? crew.rarity ?? 0)) !== 1) return false;
 		if (!exclude?.includes('owned-ff') && ownedFilter === 'owned-ff' && crew.max_rarity !== (crew.highest_owned_rarity ?? crew.rarity)) return false;
 		if (!exclude?.includes('rarity') && rarityFilter.length > 0 && !rarityFilter.includes(crew.max_rarity)) return false;
@@ -687,17 +689,73 @@ const CrewTable = (props: CrewTableProps) => {
 			const names = col.maps.map(c => c.collection.name);
 			
 			let result = makeAllCombos(names);
-			// for (let i = 0; i <  result.length; i++) {
+			
+			let exact = [] as {names: string[], count: number}[];
+			let over = [] as {names: string[], count: number}[];
+			let under = [] as {names: string[], count: number}[];
+			let colneed = col.collection.needed ?? 0;
+			
+			for (let test of result) {
+				let cols = test.map(tc => col.maps.find(f => f.collection.name === tc));
 				
-			// 	result[i] = [ col.collection.name, ... result[i]];
-			// }
-			return result;
+				if (cols?.length) {			
+					let extracrew = [] as string[];
+					extracrew = cols.map(cm => cm?.crew.slice(0, cm.collection.needed)).flat().map(f => f?.symbol ?? '');
+					extracrew = extracrew.filter((ef, i) => ef !== '' && extracrew.findIndex(fi => fi === ef) === i) ?? [];
+					let total = extracrew.length; // cols.map(c => c?.collection.needed ?? 0).reduce((p, n) => p + n, 0);
+					let tc = cols.map(c => c?.collection.needed ?? 0).reduce((p, n) => p + n, 0);
+
+					if (total) {
+						if (total === colneed) {
+							exact.push({ names: test, count: total });
+						}	
+						else if (total > colneed) {
+							over.push({ names: test, count: total });
+						}
+						else  {
+							under.push({ names: test, count: total });
+						}
+					}
+				}
+			}
+			exact.sort((a, b) => b.names.length - a.names.length);
+			under.sort((a, b) => b.names.length - a.names.length);
+			for (let ex of exact) {
+				ex.names = ex.names.map((eu, idx) => (!idx ? "* " : "") + eu);
+			}
+			if (exact.length > 1) {
+				return exact.map(d => d.names);
+			}
+			return exact.concat(under).map(d => d.names);
 		}
 
 		for (let col of colOptimized) {
 			col.combos = createCombos(col);
 		}
-		return colOptimized;
+		return colOptimized.sort((a, b) => {
+			if (a.combos && b.combos) {
+				let acb = a.combos.length;
+				let bcb = b.combos.length;
+				let ayes = a.combos.filter(c => c[0].startsWith("* "))?.length ?? 0;
+				let byes = b.combos.filter(c => c[0].startsWith("* "))?.length ?? 0;
+				let r = 0;
+				
+				if (!r) r = byes - ayes;
+				if (!r) r = bcb - acb;
+
+				return r;
+			}	
+			else if (a.combos) {
+				return -1;
+			}
+			else if (b.combos) {
+				return 1;
+			}
+			else {
+				return 0;
+			}
+
+		});
 	}
 
 	const colOptimized = createOptimizerGroups();
