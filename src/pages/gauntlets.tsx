@@ -46,7 +46,7 @@ export const SKILLS = {
 
 const GauntletsPage = () => {	
 	return (
-		<DataPageLayout playerPromptType='recommend' demands={['all_buffs', 'crew', 'gauntlets', 'items']}>
+		<DataPageLayout playerPromptType='recommend' demands={['gauntlets', 'all_buffs', 'crew', 'items']}>
 			<GauntletsPageComponent />
 		</DataPageLayout>
 	);
@@ -754,7 +754,7 @@ class GauntletsPageComponent extends React.Component<GauntletsPageProps, Gauntle
 		const { gauntletSettings: settings } = this.state;
 
 		const matchedCrew1 =
-			allCrew.concat(oppo).filter(e => e.max_rarity > 3 && (
+			allCrew.concat(oppo).map(z => z as PlayerCrew).filter(e => e.max_rarity > 3 && (
 				(!rankByPair || (rankByPair in e.ranks)) &&
 				(Object.keys(e.base_skills).some(k => e.base_skills[k].range_max >= rmax) || !!e.isOpponent) ||
 				prettyTraits.filter(t => e.traits_named.includes(t)).length > 1))
