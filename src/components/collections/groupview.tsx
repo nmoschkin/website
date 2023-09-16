@@ -54,7 +54,9 @@ export const CollectionGroupTable = (props: GroupTableProps) => {
 		setGroupPage(Math.min(pageCount, 1));
 		return <></>
 	}
-
+	let crewprep = colGroups.map((col) => col.crew).flat();
+	const allCrew = crewprep.filter((fc, idx) => crewprep.findIndex(fi => fi.symbol === fc.symbol) === idx).sort((a, b) => a.name.localeCompare(b.name));
+	
 	//const rewards =
 	const renderCollectionGroups = (colMap: CollectionMap[]) => {		
 		return (<div style={{
@@ -72,18 +74,28 @@ export const CollectionGroupTable = (props: GroupTableProps) => {
 				alignItems: "center",
 				justifyContent: "flex-start"			
 			}}>
-				<Input
+				<Dropdown
+					multiple
 					style={{ width: narrow ? '100%' : '50%', margin: "0.5em 0" }}
 					iconPosition="left"
-					placeholder="Search..."
-					value={searchFilter}
-					onChange={(e, { value }) => setSearchFilter(value)}>
-						<input />
-						<Icon name='search' />
-						<Button icon onClick={() => setSearchFilter('')} >
-							<Icon name='delete' />
-						</Button>
-				</Input>
+					scrolling		
+					options={allCrew?.map(ca => {
+						return {
+							key: ca.name,
+							value: ca.name,
+							text: 
+								<div key={"dropdown_opt_"+ca.symbol} style={{display:"inline-flex", alignItems:"center", flexDirection:"row"}}>
+									<img 
+										src={`${process.env.GATSBY_ASSETS_URL}${ca.imageUrlPortrait}`} 
+										style={{height:'2em', marginRight:"0.5em"}} />
+									{ca.name}
+								</div>
+						}
+					}) ?? []}
+					placeholder="Click crew name to filter..."
+					value={searchFilter.split(";").map(s => s.trim())}
+					onChange={(e, { value }) => setSearchFilter((value as string[])?.join("; "))} />
+
 
 				<RewardPicker 
 					short={short}
@@ -127,8 +139,8 @@ export const CollectionGroupTable = (props: GroupTableProps) => {
 					const crewhave = (collection?.owned ?? 0);
 
 					return (<Table.Row key={"colgroup" + idx}>
-						<Table.Cell width={4}>
-							<div style={{								
+						<Table.Cell width={4} style={{verticalAlign:"top"}}>						
+							<div style={{																
 								display: "flex",
 								flexDirection: "column",
 								justifyContent: "center",
@@ -136,50 +148,51 @@ export const CollectionGroupTable = (props: GroupTableProps) => {
 								height: "100%",
 								margin: "1em"
 							}}>
-							
-							<Image size='medium' src={`${process.env.GATSBY_ASSETS_URL}${collection.image?.replace("/collection_vault/", 'collection_vault_')}.png`}
-								style={{ margin: "0.5em 0", border: '1px solid #7f7f7f7f', borderRadius: '6px'}}
-								title={collection.name}
-							/>
-							<h2 
-								onClick={(e) => { setSearchFilter(''); setMapFilter({ ...mapFilter ?? {}, collectionsFilter: [collection.id]})}}
-								style={{textDecoration: "underline",marginBottom: 0, textAlign: "center", margin: '0.5em 0', cursor: "pointer"}}>{collection.name}</h2>
-							<i>{formatColString(collection.description ?? "", { textAlign: 'center' })}</i>
-							<hr style={{width: "16em"}}></hr>
-							<i style={{fontSize: "0.9em"}}>{collection.needed} needed for rewards:</i>
-							<div style={{margin: "0.5em 0 0.5em 0"}}>
-								<RewardsGrid wrap={true} rewards={rewards} />
-							</div>
-							<i style={{fontSize: "0.9em"}}>{collection.owned} / {collection.crew?.length} Owned</i>
-							<i style={{fontSize: "0.9em"}}>Progress to next: {(typeof collection?.milestone?.goal === 'number' && collection?.milestone?.goal > 0) ? `${collection.progress} / ${collection.milestone.goal}` : 'MAX'}</i>
-							
-							{(crewhave >= crewneed && !!collection.neededCost) && 
-								(<div style={{marginTop:"0.5em"}}>
-								<i style={{fontSize: "0.9em"}}>
-									Citation cost to next: 
-									<img
-									src={`${process.env.GATSBY_ASSETS_URL}currency_honor_currency_0.png`}
-									style={{width : '16px', verticalAlign: 'text-bottom'}}
-									/> 
-									{collection.neededCost.toLocaleString()}
-								</i>
-								<div style={{marginTop:"0.5em"}}>
-								<RewardsGrid kind={'need'} needs={makeCiteNeeds(col)} />
+
+								<Image size='medium' src={`${process.env.GATSBY_ASSETS_URL}${collection.image?.replace("/collection_vault/", 'collection_vault_')}.png`}
+									style={{ margin: "0.5em 0", border: '1px solid #7f7f7f7f', borderRadius: '6px'}}
+									title={collection.name}
+								/>
+								<h2 
+									onClick={(e) => { setSearchFilter(''); setMapFilter({ ...mapFilter ?? {}, collectionsFilter: [collection.id]})}}
+									style={{textDecoration: "underline",marginBottom: 0, textAlign: "center", margin: '0.5em 0', cursor: "pointer"}}>{collection.name}</h2>
+								<i>{formatColString(collection.description ?? "", { textAlign: 'center' })}</i>
+								<hr style={{width: "16em"}}></hr>
+								<i style={{fontSize: "0.9em"}}>{collection.needed} needed for rewards:</i>
+								<div style={{margin: "0.5em 0 0.5em 0"}}>
+									<RewardsGrid wrap={true} rewards={rewards} />
 								</div>
-								</div>)}
-								{(crewhave >= crewneed && !collection.neededCost && <i style={{ fontSize: "0.9em", textAlign: "center", color: 'lightgreen'}}>
-									All crew required to reach the next milestone are already fully fused.
-									</i>)}
+								<i style={{fontSize: "0.9em"}}>{collection.owned} / {collection.crew?.length} Owned</i>
+								<i style={{fontSize: "0.9em"}}>Progress to next: {(typeof collection?.milestone?.goal === 'number' && collection?.milestone?.goal > 0) ? `${collection.progress} / ${collection.milestone.goal}` : 'MAX'}</i>
 								
-							{crewhave < crewneed && 
-								<i className='ui segment' style={{color:'salmon', textAlign: 'center', margin: "0.5em"}}>
-									You need to recruit {crewneed - crewhave} more crew to reach the next goal.
-								</i>}
-							</div>
+								{(crewhave >= crewneed && !!collection.neededCost) && 
+									(<div style={{marginTop:"0.5em"}}>
+									<i style={{fontSize: "0.9em"}}>
+										Citation cost to next: 
+										<img
+										src={`${process.env.GATSBY_ASSETS_URL}currency_honor_currency_0.png`}
+										style={{width : '16px', verticalAlign: 'text-bottom'}}
+										/> 
+										{collection.neededCost.toLocaleString()}
+									</i>
+									<div style={{marginTop:"0.5em"}}>
+									<RewardsGrid kind={'need'} needs={makeCiteNeeds(col)} />
+									</div>
+									</div>)}
+									{(crewhave >= crewneed && !collection.neededCost && <i style={{ fontSize: "0.9em", textAlign: "center", color: 'lightgreen'}}>
+										All crew required to reach the next milestone are already fully fused.
+										</i>)}
+									
+								{crewhave < crewneed && 
+									<i className='ui segment' style={{color:'salmon', textAlign: 'center', margin: "0.5em"}}>
+										You need to recruit {crewneed - crewhave} more crew to reach the next goal.
+									</i>}
+								</div>
+
 						</Table.Cell>
-						<Table.Cell>
+						<Table.Cell style={{verticalAlign:"top"}}>
 							
-						<Grid doubling columns={3} textAlign='center'>
+						<Grid doubling columns={3} textAlign='center' >
 								{col.crew.map((crew, ccidx) => (
 									<div 
 										className={ccidx < (collection?.needed ?? 0) ? 'ui segment' : undefined}
@@ -222,7 +235,7 @@ export const CollectionGroupTable = (props: GroupTableProps) => {
 											}}
 											title={"Click to see collections containing this crew member"}
 											>
-											{crew.name}
+											{crew.favorite && <Icon name='heart' style={{textDecoration: 'none'}} />} {crew.name}
 										</b>			
 										<i>({crew.pickerId} collections increased)</i>
 										<i>Level {crew.level}</i>
