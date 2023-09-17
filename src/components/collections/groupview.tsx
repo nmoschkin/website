@@ -12,6 +12,7 @@ import { CrewItemsView } from '../item_presenters/crew_items';
 import { formatColString } from '../item_presenters/crew_preparer';
 import ItemDisplay from '../itemdisplay';
 import { useStateWithStorage } from '../../utils/storage';
+import CollectionsCrewCard from './crewcard';
 
 export interface GroupTableProps {
 	playerCollections: PlayerCollection[];
@@ -70,8 +71,10 @@ export const CollectionGroupTable = (props: GroupTableProps) => {
 				</i>}
 			<div style={{
 				display: "flex",
-				flexDirection: window.innerWidth < DEFAULT_MOBILE_WIDTH ? 'column' : 'row',
-				alignItems: "center",
+				flexDirection: 
+					window.innerWidth < DEFAULT_MOBILE_WIDTH ? 'column' : 'row',
+				alignItems:
+					window.innerWidth < DEFAULT_MOBILE_WIDTH ? 'flex-start' : 'center',
 				justifyContent: "flex-start"			
 			}}>
 				<Dropdown
@@ -105,13 +108,19 @@ export const CollectionGroupTable = (props: GroupTableProps) => {
 					value={mapFilter?.rewardFilter} 
 					onChange={(value) => setMapFilter({ ...mapFilter ?? {}, rewardFilter: value as string[] | undefined })}
 					 />
-				<Checkbox style={{margin: "0 1em"}} label={"Group rewards"} checked={short} onChange={(e, { checked }) => setShort(checked ?? false)} />
-				<Checkbox style={{margin: "0 1em"}} label={"Honor Sale Pricing"} checked={costMode === 'sale'} onChange={(e, { checked }) => setCostMode(checked ? 'sale' : 'normal')} />
+				<Checkbox style={{margin: "0.5em 1em"}} label={"Group rewards"} checked={short} onChange={(e, { checked }) => setShort(checked ?? false)} />
+				<Checkbox style={{margin: "0.5em 1em"}} label={"Honor Sale Pricing"} checked={costMode === 'sale'} onChange={(e, { checked }) => setCostMode(checked ? 'sale' : 'normal')} />
 
 			</div>
 			{!!colMap?.length && 			
-			<div style={{display:"flex", flexDirection: "row", alignItems: "center"}}>
-			<Pagination style={{margin: "1em 0 1em 0"}} totalPages={pageCount} activePage={groupPage} onPageChange={(e, { activePage }) => setGroupPage(activePage as number) } />
+			<div style={{display:"flex",
+						flexDirection: 
+							window.innerWidth < DEFAULT_MOBILE_WIDTH ? 'column' : 'row', 
+						alignItems: "center"						
+						}}>
+			<Pagination style={{
+				margin: "1em 0 1em 0"				
+				}} totalPages={pageCount} activePage={groupPage} onPageChange={(e, { activePage }) => setGroupPage(activePage as number) } />
 			<div style={{margin:"0 0.5em", padding: 0}}>
 			Items Per Page:
 			<Dropdown 
@@ -209,58 +218,12 @@ export const CollectionGroupTable = (props: GroupTableProps) => {
 							
 						<Grid doubling columns={3} textAlign='center' >
 								{col.crew.map((crew, ccidx) => (
-									<div 
-										className={ccidx < (collection?.needed ?? 0) ? 'ui segment' : undefined}
-										style={{  
-											margin: "1.5em", 
-											display: "flex", 
-											flexDirection: "column", 
-											alignItems: "center", 
-											justifyContent: "center",
-											padding:"0.25em 1em",
-											paddingTop: ccidx < (collection?.needed ?? 0) ? '0.75em' : undefined,
-											borderRadius: "5px",																			
-											
-									}}>
-									
-									{ccidx < (collection?.needed ?? 0) && 
-										<div style={{zIndex: 500, display: 'flex', width: "100%", flexDirection:'row', justifyContent: 'center'}}>
-										<Icon color='green' 
-											name='star'
-											style={{marginLeft:"-52px", marginBottom: "-16px", height:'24px'}} />
-										</div>}
-									
-									<ItemDisplay 
-										size={64}
-										src={`${process.env.GATSBY_ASSETS_URL}${crew.imageUrlPortrait}`}
-										rarity={!crew.have ? 0 : crew.rarity}
-										maxRarity={crew.max_rarity}
-										targetGroup={'collectionsTarget'}
-										itemSymbol={crew.symbol}
-										allCrew={context.core.crew}
-										playerData={context.player.playerData}
-										/>
-
-										<b
-											onClick={(e) => addToSearchFilter(crew.name)} 
-											style={{
-											cursor: "pointer", 
-											margin:"0.5em 0 0 0",
-											textDecoration: "underline"
-											}}
-											title={"Click to see collections containing this crew member"}
-											>
-											{crew.favorite && <Icon name='heart' style={{textDecoration: 'none'}} />} {crew.name}
-										</b>			
-										<i>({crew.pickerId} collections increased)</i>
-										<i>Level {crew.level}</i>
-										<CrewItemsView itemSize={16} mobileSize={16} crew={crew} />
-										
-										<div style={{margin:"0.5em 0"}}>
-										<RewardsGrid kind={'need'} needs={makeCiteNeeds(crew)} />
-										</div>
-											
-									</div>
+									<CollectionsCrewCard 
+										highlightIfNeeded 
+										crew={crew} 
+										collection={collection} 
+										index={ccidx} 
+										onClick={(e, item) => addToSearchFilter(item.name)} />
 								))}
 							</Grid>
 						</Table.Cell>
@@ -270,7 +233,11 @@ export const CollectionGroupTable = (props: GroupTableProps) => {
 
 			</Table>
 			{!!colMap?.length && 			
-			<div style={{display:"flex", flexDirection: "row", alignItems: "center"}}>
+			<div style={{display:"flex",
+			flexDirection: 
+				window.innerWidth < DEFAULT_MOBILE_WIDTH ? 'column' : 'row', 
+			alignItems: "center"						
+			}}>
 			<Pagination style={{margin: "1em 0 1em 0"}} totalPages={pageCount} activePage={groupPage} onPageChange={(e, { activePage }) => setGroupPage(activePage as number) } />
 			<div style={{margin:"0 0.5em", padding: 0}}>
 			Items Per Page:

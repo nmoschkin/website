@@ -8,8 +8,11 @@ import { Collection } from '../../model/game-elements';
 import { GlobalContext } from '../../context/globalcontext';
 import { formatColString } from '../item_presenters/crew_preparer';
 import CONFIG from '../CONFIG';
+import { DEFAULT_MOBILE_WIDTH } from '../hovering/hoverstat';
 
-type CollectionsPageProps = {};
+type CollectionsPageProps = {
+	onClick?: (collectionId: number) => void;
+};
 
 type CollectionsPageState = {
 	collections?: Collection[];
@@ -62,13 +65,23 @@ class CollectionsOverviewComponent extends PureComponent<CollectionsPageProps, C
 		}
 
 		return (
+
 			<Item.Group>
 				{collections.map(collection => (
-					<Item key={collection.name} id={encodeURIComponent(collection.name)} style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
-						<Item.Image size='medium' className='ui segment' style={{border: "1px solid #7f7f7f7f", width:300, height: 150, borderRadius: "6px"}} src={`${process.env.GATSBY_ASSETS_URL}${collection.image}`} />
+					<Item key={collection.name} id={encodeURIComponent(collection.name)} style={{display: "flex", flexDirection: window.innerWidth < DEFAULT_MOBILE_WIDTH ? 'column' : "row", alignItems: "center"}}>
+						<Item.Image size='medium' className='ui segment' style={{border: "1px solid #7f7f7f7f", width: "300px", height: "100%", borderRadius: "6px"}} src={`${process.env.GATSBY_ASSETS_URL}${collection.image}`} />
 
 						<Item.Content>
-							<Item.Header><div className='text'>{collection.name}</div><hr/></Item.Header>
+							<Item.Header>
+								<div className='text' 
+									style={{
+										cursor: !!this.context.player.playerData ? 'pointer' : undefined										
+										}}
+									onClick={(e) => this.props.onClick ? this.props.onClick(collection.id) : null}>
+									{collection.name}
+								</div>
+								<hr/>
+							</Item.Header>
 							<Item.Meta>
 								<div className='text'>
 									{formatColString(collection.description ?? "", undefined, 'ui label')}
@@ -90,7 +103,7 @@ class CollectionsOverviewComponent extends PureComponent<CollectionsPageProps, C
 					</Item>
 				))}
 				<br/><br/><br/>
-			</Item.Group>
+			</Item.Group>			
 		);
 	}
 }

@@ -55,16 +55,24 @@ export const CollectionOptimizerTable = (props: CollectionOptimizerProps) => {
 		}		
 	}
 
-	const setCombo = (col: CollectionGroup, combo: string) => {
+	const setCombo = (col: CollectionGroup, combo: string | undefined) => {
 		let f = combos.find(cf => cf.collection === col.collection.name);
 		if (!f) {
+			if (!combo) return;			
 			combos.push({
 				collection: col.collection.name,
 				name: combo
 			})
 		}
 		else {
-			f.name = combo;
+			if (!combo) {
+				let newCol = combos.filter(cf => cf.collection !== col.collection.name) ?? [];
+				setCombos(newCol);
+				return;
+			}
+			else {
+				f.name = combo;
+			}			
 		}
 		setCombos([... combos]);
 	}
@@ -291,8 +299,12 @@ export const CollectionOptimizerTable = (props: CollectionOptimizerProps) => {
 			
 			<div style={{
 				display: "flex",
-				flexDirection: window.innerWidth < DEFAULT_MOBILE_WIDTH ? 'column' : 'row',
-				alignItems: "center",
+				flexDirection: 
+					window.innerWidth < DEFAULT_MOBILE_WIDTH ? 'column' : 'row',
+
+				alignItems:
+					window.innerWidth < DEFAULT_MOBILE_WIDTH ? 'flex-start' : 'center',
+
 				justifyContent: "flex-start"			
 			}}>
 				<Dropdown
@@ -327,11 +339,15 @@ export const CollectionOptimizerTable = (props: CollectionOptimizerProps) => {
 					onChange={(value) => setMapFilter({ ...mapFilter ?? {}, rewardFilter: value as string[] | undefined })}
 					 />
 				<Checkbox disabled={byCost} style={{margin: "0 1em"}} label={"Group rewards"} checked={short} onChange={(e, { checked }) => setShort(checked ?? false)} />
-				<Checkbox style={{margin: "0 1em"}} label={"Sort by cost"} checked={byCost} onChange={(e, { checked }) => setByCost(checked ?? false)} />
-				<Checkbox style={{margin: "0 1em"}} label={"Honor Sale Pricing"} checked={costMode === 'sale'} onChange={(e, { checked }) => setCostMode(checked ? 'sale' : 'normal')} />
+				<Checkbox style={{margin: "0.5em 1em"}} label={"Sort by cost"} checked={byCost} onChange={(e, { checked }) => setByCost(checked ?? false)} />
+				<Checkbox style={{margin: "0.5em 1em"}} label={"Honor Sale Pricing"} checked={costMode === 'sale'} onChange={(e, { checked }) => setCostMode(checked ? 'sale' : 'normal')} />
 			</div>
 			{!!colMap?.length && 			
-			<div style={{display:"flex", flexDirection: "row", alignItems: "center"}}>
+				<div style={{display:"flex",
+					flexDirection: 
+						window.innerWidth < DEFAULT_MOBILE_WIDTH ? 'column' : 'row', 
+					alignItems: "center"						
+					}}>
 				<Pagination style={{margin: "0.25em 0 2em 0"}} totalPages={optPageCount} activePage={optPage} onPageChange={(e, { activePage }) => setOptPage(activePage as number) } />
 				<div style={{margin:"0 0.5em", padding: 0, marginTop:"-2em"}}>
 					Items Per Page:
@@ -349,7 +365,7 @@ export const CollectionOptimizerTable = (props: CollectionOptimizerProps) => {
 						})}
 						/>
 				</div>
-				<div style={{margin:"0 0.5em", padding: 0, marginTop:"-2em"}}>
+				<div style={{margin:"0.5em", padding: 0, marginTop: window.innerWidth < DEFAULT_MOBILE_WIDTH ? undefined : "-1.5em"}}>
 					Show Crew:
 					<Dropdown 
 						style={{margin: "0.5em"}}
@@ -369,9 +385,14 @@ export const CollectionOptimizerTable = (props: CollectionOptimizerProps) => {
 			<Table striped>
 				{colMap.slice(pageSize * (optPage - 1), (pageSize * (optPage - 1)) + pageSize).map((col, idx) => {
 					
-					const optCombo = getCombo(col);
+					const optCombo = getCombo(col);					
 					const comboCrew = findCrew(col, optCombo);
-					
+					if (!comboCrew?.length && optCombo !== undefined && optCombo !== '') {
+						window.setTimeout(() => {
+							setCombo(col, col.combos ? col.combos[0].join(" / ") : undefined);
+						});						
+						return <></>
+					}
 					const collection = JSON.parse(JSON.stringify(col.collection)) as PlayerCollection;
 					collection.neededCost = starCost(comboCrew, undefined, costMode === 'sale');
 					col.neededStars = neededStars(comboCrew);
@@ -451,6 +472,8 @@ export const CollectionOptimizerTable = (props: CollectionOptimizerProps) => {
 							<div style={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center"}}>
 							<div style={{margin: "0.25em"}}>Variations: </div>
 							<Dropdown 
+								fluid={typeof window !== 'undefined' && window.innerWidth < DEFAULT_MOBILE_WIDTH}
+								direction={typeof window !== 'undefined' && window.innerWidth < DEFAULT_MOBILE_WIDTH ? 'left' : undefined}
 								scrolling
 								placeholder={"Select Options"}
 								value={optCombo}
@@ -462,6 +485,7 @@ export const CollectionOptimizerTable = (props: CollectionOptimizerProps) => {
 									text: opt.join(" / ")
 								}								
 							})}/>
+							<br />
 							</div>}
 
 							<div style={{display: 'flex', flexDirection: crewPos === 'top' ? 'column-reverse' : 'column'}}>
@@ -518,7 +542,12 @@ export const CollectionOptimizerTable = (props: CollectionOptimizerProps) => {
 
 			</Table>
 			{!!colMap?.length && 			
-			<div style={{display:"flex", flexDirection: "row", alignItems: "center"}}>
+				<div style={{display:"flex",
+						flexDirection: 
+							window.innerWidth < DEFAULT_MOBILE_WIDTH ? 'column' : 'row', 
+						alignItems: "center"						
+						}}>
+
 				<Pagination style={{margin: "0.25em 0 2em 0"}} totalPages={optPageCount} activePage={optPage} onPageChange={(e, { activePage }) => setOptPage(activePage as number) } />
 				<div style={{margin:"0 0.5em", padding: 0, marginTop:"-2em"}}>
 					Items Per Page:
@@ -536,7 +565,7 @@ export const CollectionOptimizerTable = (props: CollectionOptimizerProps) => {
 						})}
 						/>
 				</div>
-				<div style={{margin:"0 0.5em", padding: 0, marginTop:"-2em"}}>
+				<div style={{margin:"0.5em", padding: 0, marginTop: window.innerWidth < DEFAULT_MOBILE_WIDTH ? undefined : "-1.5em"}}>
 					Show Crew:
 					<Dropdown 
 						style={{margin: "0.5em"}}
