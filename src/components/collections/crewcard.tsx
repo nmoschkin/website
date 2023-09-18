@@ -4,8 +4,8 @@ import { Icon } from 'semantic-ui-react';
 import { RewardsGrid } from '../crewtables/rewards';
 import { CrewItemsView } from '../item_presenters/crew_items';
 import ItemDisplay from '../itemdisplay';
-import { makeCiteNeeds } from './utils';
 import { GlobalContext } from '../../context/globalcontext';
+import { makeCiteNeeds } from '../../utils/collectionutils';
 
 
 export interface CollectionsCrewCardProps {
@@ -46,7 +46,7 @@ const CollectionsCrewCard = (props: CollectionsCrewCardProps): JSX.Element => {
     }}>
     
     {needed && highlightIfNeeded && 
-        <div style={{zIndex: 500, display: 'flex', width: "100%", flexDirection:'row', justifyContent: 'center'}}>
+        <div style={{zIndex: 5, display: 'flex', width: "100%", flexDirection:'row', justifyContent: 'center'}}>
         <Icon color='green' 
             name='star'
             style={{marginLeft:"-52px", marginBottom: "-16px", height:'24px'}} />
