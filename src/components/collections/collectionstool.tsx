@@ -382,8 +382,8 @@ const CollectionsViews = (props: CrewViewsProps) => {
 		{ key: '4*', value: 4, text: '4* Super Rare' },
 		{ key: '5*', value: 5, text: '5* Legendary' }
 	];
-
-	const searches = searchFilter?.length ? searchFilter.split(';').map(sf => sf.trim())?.filter(f => f?.length) ?? [] : [];
+	
+	let selnum = undefined as number | undefined;
 
 	if (typeof window !== 'undefined' && !!window.location.search?.length) {
 		if (context.player.playerData) {
@@ -391,17 +391,19 @@ const CollectionsViews = (props: CrewViewsProps) => {
 			let sel = params.get("select");
 			let findcol = playerCollections?.find(f => f.name === sel);
 			if (findcol) {
-				const selnum = findcol.id;
-				if (!mapFilter?.collectionsFilter?.includes(selnum)) {				
+				const msel = selnum = findcol.id;
+				if (!mapFilter?.collectionsFilter?.includes(msel)) {				
+					setMapFilter({ ... (mapFilter ?? {}), collectionsFilter: [msel]});
 					window.setTimeout(() => {
 						window.history.replaceState({}, document.title, "/collections");
-						setMapFilter({ ... (mapFilter ?? {}), collectionsFilter: [selnum]});
 						setTabIndex(3);
 					});
 				}			
 			}
 		}
 	}
+
+	const offPageSelect = selnum;
 
 	const processWorkerResult = (result: CollectionWorkerResult) => {
 		setColGroups(result.maps);
@@ -420,7 +422,7 @@ const CollectionsViews = (props: CrewViewsProps) => {
 				playerCollections,
 				playerData: context.player.playerData,
 				filterProps: {
-					mapFilter,
+					mapFilter: offPageSelect ? { ... mapFilter, collectionsFilter: [offPageSelect] } : mapFilter,
 					searchFilter,
 					rarityFilter,
 					fuseFilter,
@@ -458,6 +460,13 @@ const CollectionsViews = (props: CrewViewsProps) => {
 			render: (workerRunning: boolean) => <CollectionsOverviewComponent
 				onClick={(col) => {
 					if (!context.player.playerData) return;
+					if (typeof window !== 'undefined') {
+						window.scrollTo({
+							top: 0,
+							left: 0,
+							behavior: "smooth",
+						  });
+					}
 					setTabIndex(3);					
 					setMapFilter({ ...mapFilter ?? {}, collectionsFilter: [col]});
 					setSearchFilter(''); 
@@ -488,10 +497,10 @@ const CollectionsViews = (props: CrewViewsProps) => {
 			render: (workerRunning: boolean) => renderTable(workerRunning)
 		},
 		{ 
-			menuItem: 'Groups', 
+			menuItem: 'Collections', 
 			longTitle: 'Collections Crew Groups',
-			description: <>Crew grouped by collection,<br/>and sorted by cost</>, 
-			longDescription: "Show crew grouped into collections sorted by closest to max. Crew highlighted in green are required to reach the next tier. Crew are sorted in ascending order of rarity, level, and equipment slots. Use the search box to search for specific crew. Clicking on a crew will append the crew name to the search box.",
+			description: <>Visualize crew grouped into<br/>collections, and sorted by cost</>, 
+			longDescription: <>Show crew grouped into collections sorted by closest to max. Crew marked by a green star <Icon name='star' color='green' size='small' /> are required to reach the next tier. Crew are sorted in ascending order of rarity, level, and equipment slots. Use the search box to search for specific crew. Clicking on a crew will append the crew name to the search box.</>,
 			showFilters: true,
 			requirePlayer: true,
 			render: (workerRunning: boolean) => <CollectionGroupTable workerRunning={workerRunning} playerCollections={playerCollections} colGroups={colGroups} />
