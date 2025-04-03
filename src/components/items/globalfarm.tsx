@@ -8,6 +8,8 @@ import { EquipmentWorkerResults } from "../../model/worker";
 import { OptionsPanelFlexRow } from "../stats/utils";
 import { ItemHoverStat } from "../hovering/itemhoverstat";
 import { ItemsFilterContext } from "./filters";
+import { Fab } from "../hovering/fab";
+import { Icon } from "semantic-ui-react";
 
 
 interface GlobalFarmProps {
@@ -119,6 +121,14 @@ export const GlobalFarm = (props: GlobalFarmProps) => {
             sources={sources}
             textStyle={{fontStyle: 'normal', fontSize: '1em'}}
             />
+            <Fab size='medium' shape='round' placement="bottom left">
+                <div style={{margin: 'auto'}}>
+                    <Icon name='plus circle' size='large' />
+                </div>
+            </Fab>
+            <div className="fixed" style={{position: 'fixed', left: '32px', top: '32px', width: 'auto', }}>
+                Testing
+            </div>
         </React.Fragment>
     }
 
