@@ -168,12 +168,13 @@ const BetaTachyon = {
 
             const skillScore = (skill: ComputedSkill | Skill) => {
                 if (!skill?.core) return 0;
-                if ("max" in skill) {
-                    return skill.core + (((skill.max ?? 0) + (skill.min ?? 0)) * 0.5);
-                }
-                else {
-                    return skill.core + (((skill.range_max ?? 0) + (skill.range_min ?? 0)) * 0.5);
-                }
+                return skillSum(skill);
+                // if ("max" in skill) {
+                //     return skill.core + (((skill.max ?? 0) + (skill.min ?? 0)) * 0.5);
+                // }
+                // else {
+                //     return skill.core + (((skill.range_max ?? 0) + (skill.range_min ?? 0)) * 0.5);
+                // }
             }
 
             function getAMSeats(crew: PlayerCrew | CrewMember) {
@@ -192,29 +193,9 @@ const BetaTachyon = {
             }
 
             function getSkillOrder(crew: PlayerCrew | CrewMember, forceTwo?: boolean) {
-                const sk = [] as Skill[];
-                let x = 0;
-                for (let skill of skills) {
-                    if (skill in crew.base_skills) {
-                        sk.push({ ...crew.base_skills[skill], skill: voyskills[x] });
-                    }
-                    x++;
-                }
-
-                sk.sort((a, b) => b.core - a.core);
-                const output = [] as string[];
-
-                if (sk.length > 0 && sk[0].skill) {
-                    output.push(sk[0].skill);
-                }
-                if (sk.length > 1 && sk[1].skill) {
-                    output.push(sk[1].skill);
-                }
-                if (sk.length > 2 && sk[2].skill) {
-                    output.push(sk[2].skill);
-                }
-
-                return forceTwo ? output.slice(0, 2) : output;
+                if (crew.skill_order.length === 1) return crew.skill_order.slice().map(s => s.replace("_skill", ""));
+                else if (forceTwo || crew.skill_order.length === 2) return crew.skill_order.slice(0, 2).sort().map(s => s.replace("_skill", ""));
+                return [...crew.skill_order.slice(0, 2).sort(), crew.skill_order[2] ].map(s => s.replace("_skill", ""));
             }
 
             function printSkillOrder(crew: PlayerCrew | CrewMember, forceTwo?: boolean) {
@@ -550,11 +531,11 @@ const BetaTachyon = {
             }
 
             const polestars = {} as { [key: string]: PolestarCombo[] };
-            const maxgroup = resultCrew.map(rc => (rc.voyagesImproved?.map(vi => allGroups[vi]).reduce((p, n) => p + n, 0) ?? 0) / (rc.voyagesImproved?.length ?? 1)).reduce((p, n) => p > n ? p : n, 0);
+            const maxgroup = resultCrew.map(rc => (rc.voyagesImproved?.map(vi => allGroups[vi]).reduce((p, n) => p > n ? p : n, 0) ?? 0)).reduce((p, n) => p > n ? p : n, 0);
             resultCrew.forEach((crew) => {
                 polestars[crew.symbol] = findPolestars(crew, allCrew);
                 if (crew.voyagesImproved) {
-                    let crewnum = crew.voyagesImproved.map(vi => allGroups[vi]).reduce((p, n) => p + n, 0) / crew.voyagesImproved.length;
+                    let crewnum = crew.voyagesImproved.map(vi => allGroups[vi]).reduce((p, n) => p > n ? p : n, 0);
                     crew.groupSparsity = 1 - (crewnum / maxgroup);
                 }
                 else {
@@ -682,5 +663,86 @@ const BetaTachyon = {
     },
 
 }
+
+function getSkoCrew(sko: string, bucket: {[key:string]: SplitType[]}) {
+    let parts = sko.replace(/\//g, ',').split(",");
+    let pri = parts.slice(0, 2).join();
+    let tert = parts.length > 2 ? parts[2] : null;
+    return bucket[pri]?.filter(f => f.pri_key === pri && f.tert_key === tert)?.map(f => f.crew) || null;
+}
+
+function getSplitData(crew: CrewMember, bucket: {[key:string]: SplitType[]}) {
+    return bucket[crew.skill_order.slice(0, 2).sort().join()].find(f => f.crew.symbol === crew.symbol)!
+}
+
+function createSkillBuckets(roster: PlayerCrew[]) {
+
+    const pribucket = {} as {[key:string]: SplitType[]};
+    const tertbucket = {} as {[key:string]: SplitType[]};
+
+    function skillSplit(c: PlayerCrew) {
+        let skills = c.skill_order.map(skill => ({...c[skill], skill }) as ComputedSkill);
+        let i = skills.length;
+        let result: SplitType;
+
+        if (i === 1) {
+            result = {
+                crew: c,
+                primary: skills.slice(0, 1),
+                tertiary: null,
+                primary_aggregate: 0,
+                pri_key: c.skill_order.slice(0, 1).sort().join(),
+                tert_key: null
+            };
+        }
+        else if (i === 2) {
+            result = {
+                crew: c,
+                primary: skills.slice(0, 2).sort(),
+                tertiary: null,
+                primary_aggregate: 0,
+                pri_key: c.skill_order.slice(0, 2).sort().join(),
+                tert_key: null
+            };
+        }
+        else {
+            result = {
+                crew: c,
+                primary: skills.slice(0, 2).sort(),
+                tertiary: skills[2],
+                primary_aggregate: 0,
+                pri_key: c.skill_order.slice(0, 2).sort().join(),
+                tert_key: c.skill_order[2]
+            };
+        }
+        result.primary_aggregate = skillSum(result.primary);
+        return result;
+    }
+
+    roster.forEach((crew, idx) => {
+        const split = skillSplit(crew);
+        pribucket[split.pri_key] ??= [];
+        pribucket[split.pri_key].push(split);
+        if (split.tert_key && split.tertiary) {
+            tertbucket[split.tert_key] ??= [];
+            tertbucket[split.tert_key].push(split);
+        }
+    });
+
+    Object.entries(pribucket).forEach(([key, value]) => {
+        value.sort((a, b) => b.primary_aggregate - a.primary_aggregate);
+    });
+
+    Object.entries(tertbucket).forEach(([key, value]) => {
+        value.sort((a, b) => b.primary_aggregate - a.primary_aggregate);
+    });
+
+    return {
+        primary: pribucket,
+        tertiary: tertbucket
+    };
+}
+
+type SplitType = { primary: ComputedSkill[], tertiary: ComputedSkill | null, primary_aggregate: number, pri_key: string, tert_key: string | null, crew: PlayerCrew };
 
 export default BetaTachyon;
