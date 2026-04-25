@@ -158,7 +158,7 @@ export const DilemmaTable = (props: DilemmaTableProps) => {
                         <span>
                             {t('hof.max_duration')}{t('global.colon')}
                         </span>
-                        <span style={{fontSize: '1.25em', fontWeight: 'bold'}}>{formatTime(maxRun, t, false)}</span>
+                        <span style={{fontSize: '1.25em', fontWeight: 'bold'}}>{formatTime(maxRun, t, false)} ({formatTime(maxRun, t, false, true)})</span>
                     </div>}
                 </>}
                 />

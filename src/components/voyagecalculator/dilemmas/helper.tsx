@@ -75,9 +75,10 @@ export const DilemmaHelperAccordion = (props: DilemmaHelperProps) => {
 
 export const DilemmaHelper = (props: DilemmaHelperProps) => {
     const { voyage, crewTargetGroup, shipTargetGroup, itemTargetGroup, dbid } = props;
-    const [voyageLog, setVoyageLog] = useStateWithStorage<VoyageLogRoot | undefined>(`${voyage.id}/dilemma_helper/voyage_log`, undefined, { rememberForever: false });
+    const [voyageLog, setVoyageLog] = useStateWithStorage<VoyageLogRoot | undefined>(`${dbid}/dilemma_helper/voyage_log`, undefined, { rememberForever: true, avoidSessionStorage: true });
     const [answeredDilemmas, setAnsweredDilemmas] = useStateWithStorage<AnsweredDilemma[]>(`dilemma_helper/answered_dilemmas`, [], { rememberForever: true });
-    const flexCol = OptionsPanelFlexColumn;
+    const [lastVoyage, setLastVoyage] = useStateWithStorage<number | undefined>(`${dbid}/dilemma_helper/last_voyage`, undefined, { rememberForever: true });
+	const flexCol = OptionsPanelFlexColumn;
 
 	React.useEffect(() => {
 		if (!!voyage?.id && typeof window !== 'undefined') {
@@ -89,6 +90,11 @@ export const DilemmaHelper = (props: DilemmaHelperProps) => {
 			if (newDilemmas.length !== answeredDilemmas.length) {
 				setAnsweredDilemmas(newDilemmas);
 			}
+		}
+		if (!voyage?.id || (!!lastVoyage && lastVoyage !== voyage?.id)) {
+			setAnsweredDilemmas([].slice());
+			setVoyageLog(undefined);
+			setLastVoyage(undefined);
 		}
 	}, [voyage]);
 
@@ -111,9 +117,13 @@ export const DilemmaHelper = (props: DilemmaHelperProps) => {
             <div style={{...flexCol, gap: '1em', justifyContent: 'stretch', alignItems: 'stretch' }}>
                 <VoyageLogImportComponent
 					currentHasRemote={!!voyageLog?.length}
-                    setVoyageLog={setVoyageLog}
+                    setVoyageLog={(data) => {
+						setVoyageLog(data);
+						setLastVoyage(voyage.id);
+					}}
                     clearVoyageLog={() => {
 						setVoyageLog(undefined);
+						setLastVoyage(undefined);
 						setAnsweredDilemmas([].slice());
 					}}
                     voyageId={voyage.id}

@@ -4,8 +4,8 @@ import { AllBuffsCapHash, Player, PlayerCrew, TranslateMethod } from '../model/p
 import { AntimatterSeatMap } from '../model/voyage';
 import { Estimate } from "../model/voyage";
 
-export const formatTime = (time: number, t?: TranslateMethod, zeroMin = true): string => {
-	let days = Math.floor(time / 24);
+export const formatTime = (time: number, t?: TranslateMethod, zeroMin = true, noDays = false): string => {
+	let days = noDays ? 0 : Math.floor(time / 24);
 	let hours = time - (days * 24);
 	let minutes = Math.floor((hours - Math.floor(hours)) * 60);
 	hours = Math.floor(hours);
