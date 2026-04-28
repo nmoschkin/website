@@ -228,7 +228,11 @@ const ChainCrew = (props: ChainCrewProps) => {
 				/>
 			</div>
 
-			<Message style={{ margin: '1em 0' }}>
+			<div style={{ margin: '2em 0' }}>
+				<CrewFullExporter solver={solver} optimizer={optimizer} />
+			</div>
+
+			<Message style={{ margin: '2em 0' }}>
 				<Message.Content>
 					<Message.Header>{t('fbb.tips.title')}</Message.Header>
 					<p><b>{t('fbb.tips.one_hand_exception_a')}</b> {t('fbb.tips.one_hand_exception_b')}</p>
@@ -239,8 +243,6 @@ const ChainCrew = (props: ChainCrewProps) => {
 					<p><b>{t('fbb.tips.trait_numbers_a')}</b> {t('fbb.tips.trait_numbers_b')}</p>
 				</Message.Content>
 			</Message>
-
-			<CrewFullExporter solver={solver} optimizer={optimizer} />
 		</div>
 	);
 

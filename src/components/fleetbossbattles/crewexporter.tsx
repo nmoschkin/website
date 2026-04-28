@@ -1,5 +1,15 @@
 import React from 'react';
-import { Header, Button, Popup, Message, Accordion, Form, Select, Input } from 'semantic-ui-react';
+import {
+	Accordion,
+	Button,
+	Checkbox,
+	Form,
+	Header,
+	Input,
+	Message,
+	Popup,
+	Select
+} from 'semantic-ui-react';
 
 import { BossCrew, ExportPreferences, FilteredGroup, Optimizer, ShowHideValue, SolveStatus, Solver, SolverNode, SolverTrait } from '../../model/boss';
 import { GlobalContext } from '../../context/globalcontext';
@@ -9,7 +19,7 @@ import { exportDefaults } from './fbbdefaults';
 import { isNodeOpen, suppressDuplicateTraits } from './fbbutils';
 import { TraitNames } from '../../model/traits';
 
-const exportCompact = {
+const exportCompact: ExportPreferences = {
 	header: 'hide',
 	solve: 'hide',
 	node_format: 'none',
@@ -23,7 +33,7 @@ const exportCompact = {
 	flag_alpha: '',
 	flag_unique: '',
 	flag_nonoptimal: ''
-} as ExportPreferences;
+};
 
 const exportNodeGroups = (node: SolverNode, nodeGroups: FilteredGroup[], traitData: SolverTrait[], exportPrefs: ExportPreferences, TRAIT_NAMES: TraitNames) => {
 	const compareTraits = (a, b) => b.traits.length - a.traits.length;
@@ -32,7 +42,7 @@ const exportNodeGroups = (node: SolverNode, nodeGroups: FilteredGroup[], traitDa
 	const compareNotesAsc = (a, b) => {
 		return Object.values(a.notes).filter(note => !!note).length - Object.values(b.notes).filter(note => !!note).length;
 	};
-	const sortGroups = (a, b) => {
+	const sortGroups = (a: FilteredGroup, b: FilteredGroup) => {
 		const comps = [compareTraits, compareNotesAsc, compareCrew, compareScore];
 		let test = 0;
 		while (comps.length > 0 && test === 0) {
@@ -169,10 +179,14 @@ type CrewFullExporterProps = {
 };
 
 export const CrewFullExporter = (props: CrewFullExporterProps) => {
-	const { TRAIT_NAMES, t, tfmt } = React.useContext(GlobalContext).localized;
-	const { exportPrefs, setExportPrefs } = React.useContext(UserContext);
+	const { TRAIT_NAMES, t } = React.useContext(GlobalContext).localized;
+	const { exportPrefs, setExportPrefs, spotterPrefs, setSpotterPrefs } = React.useContext(UserContext);
 	const { bossBattle: { description, chainIndex } } = React.useContext(SolverContext);
 	const { solver, optimizer } = props;
+
+	React.useEffect(() => {
+		if (spotterPrefs.autoCopy) copyFull();
+	}, [solver]);
 
 	const copyFull = () => {
 		const unsolvedNodes: number = solver.nodes.filter(node => isNodeOpen(node)).length;
@@ -205,7 +219,12 @@ export const CrewFullExporter = (props: CrewFullExporterProps) => {
 				output += nodeList;
 			}
 		});
-		navigator.clipboard.writeText(header + output);
+
+		// Autocopy requires some form of user activation
+		//	If none detected, catch and suppress DOMException here
+		navigator.clipboard.writeText(header + output).catch((e) => {
+			console.log('Ignoring request to auto copy possible crew list!');
+		});
 	};
 
 	// const copyFullPermalink = () => {
@@ -218,20 +237,28 @@ export const CrewFullExporter = (props: CrewFullExporterProps) => {
 	// }
 
 	return (
-		<Message style={{ margin: '2em 0' }}>
+		<Message>
 			<Message.Content>
 				<Message.Header>{t('fbb.crew_lists.title')}</Message.Header>
 				<p>{t('fbb.crew_lists.heading')}</p>
 				<ExportOptions prefs={exportPrefs} updatePrefs={setExportPrefs} />
-				<Popup
-					content={t('clipboard.copied_exclaim')}
-					on='click'
-					position='right center'
-					size='tiny'
-					trigger={
-						<Button icon='clipboard' content={t('fbb.crew_lists.clipboard')} onClick={() => copyFull()} />
-					}
-				/>
+				<div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: '1em' }}>
+					<Popup
+						content={t('clipboard.copied_exclaim')}
+						on='click'
+						position='right center'
+						size='tiny'
+						trigger={
+							<Button icon='clipboard' content={t('fbb.crew_lists.clipboard')} onClick={() => copyFull()} />
+						}
+					/>
+					<Checkbox	/* Auto copy possible crew */
+						label='Auto copy possible crew'
+						checked={spotterPrefs.autoCopy}
+						onChange={(e, data) => setSpotterPrefs({...spotterPrefs, autoCopy: data.checked as boolean})}
+						toggle
+					/>
+				</div>
 				{/* <Popup
 					content='Copied!'
 					on='click'
@@ -241,7 +268,6 @@ export const CrewFullExporter = (props: CrewFullExporterProps) => {
 						<Button icon='link' content='Copy permalink' onClick={() => copyFullPermalink()} />
 					}
 				/> */}
-
 			</Message.Content>
 		</Message>
 	);

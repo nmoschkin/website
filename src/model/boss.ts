@@ -176,6 +176,7 @@ export interface SpotterPreferences {
 	nonoptimal: string;
 	noncoverage: string;
 	confirmSolves: boolean;
+	autoCopy: boolean;
 }
 
 export interface SoloPreferences {
