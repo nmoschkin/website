@@ -67,7 +67,7 @@ export const GauntletPairTable = (props: GauntletPairTableProps) => {
             }}>
             {pairGroup.pair.map((p, ik) => {
                 return (
-                    <div key={ik} style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                    <div key={`gauntlet_pair_${ik}_${p}`} style={{ display: "flex", flexDirection: "row", justifyContent: "center" }}>
                         <img src={getSkillUrl(p)} style={{ height: "1em", maxWidth: "1em", marginLeft: "0.25em", marginRight: "0.25em" }} /> {skillToShort(shortToSkill(p, true)!)} {ik === 0 && <span>&nbsp;/&nbsp;</span>}
                     </div>
                 )
@@ -75,7 +75,7 @@ export const GauntletPairTable = (props: GauntletPairTableProps) => {
         </div>
         {pairGroup.crew.map((crew) => (
             <GauntletPairCard
-                key={`pairCardCrew_${crew.id}_${pairGroup.pair.join("_")}`}
+                key={`pairCardCrew_${crew.id}_${pairGroup.pair.join("_")}+${!!crew.have}`}
                 crew={crew}
                 gauntlet={gauntlet}
                 pair={pairGroup.pair}

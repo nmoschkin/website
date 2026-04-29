@@ -181,7 +181,7 @@ export const GauntletView = (props: GauntletViewProps) => {
             {pairGroups
                 .map((pairGroup, pk) => {
                     return (<GauntletPairTable gauntlet={gauntlet}
-                        key={"pairGroup_" + pk}
+                        key={`pair_group_${pk}_${pairGroup.pair.join("/")}`}
                         currContest={currContest === pairGroup.pair.map(e => shortToSkill(e)).sort().join()}
                         pairGroup={pairGroup}
                         boostMode={config.buffMode}
