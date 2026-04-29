@@ -75,7 +75,7 @@ export const GauntletPairTable = (props: GauntletPairTableProps) => {
         </div>
         {pairGroup.crew.map((crew) => (
             <GauntletPairCard
-                key={`pairCardCrew_${crew.id}_${pairGroup.pair.join("_")}+${!!crew.have}`}
+                key={`pairCardCrew_${crew.id}_${pairGroup.pair.join("_")}+${!!crew.have}+${crew.symbol}`}
                 crew={crew}
                 gauntlet={gauntlet}
                 pair={pairGroup.pair}
