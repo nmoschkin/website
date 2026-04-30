@@ -120,7 +120,7 @@ export const CrewConfigTable = (props: CrewConfigTableProps) => {
 		setCrew ??= (e) => { return; };
 
 		return (
-			<Table.Row key={idx} {...attributes}
+			<Table.Row key={`roster_${crew.symbol}+${crew.id}+${!!crew.have}_${rosterType}`} {...attributes}
 				// style={{
 				// 	backgroundColor: specialView === 'as_immortalized' && crew.immortal === CompletionState.DisplayAsImmortalOwned ? 'darkgreen' : undefined
 				// }}
