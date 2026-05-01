@@ -186,7 +186,7 @@ export const CrewFullExporter = (props: CrewFullExporterProps) => {
 
 	React.useEffect(() => {
 		if (spotterPrefs.autoCopy) copyFull();
-	}, [solver]);
+	}, [optimizer]);
 
 	const copyFull = () => {
 		const unsolvedNodes: number = solver.nodes.filter(node => isNodeOpen(node)).length;
