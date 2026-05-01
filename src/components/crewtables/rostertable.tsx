@@ -39,6 +39,7 @@ import { CrewDataCoreRankCells, getDataCoreRanksTableConfig } from './views/data
 import { QuipmentScoreCells, getQuipmentTableConfig } from './views/quipmentscores';
 import { TopQuipmentScoreCells, getTopQuipmentTableConfig } from './views/topquipment';
 import WeightingInfoPopup from './weightinginfo';
+import { CrewOfferFilter } from './filters/crewofferfilter';
 
 interface IRosterTableContext {
 	pageId: string;
@@ -78,7 +79,6 @@ export const RosterTable = (props: RosterTableProps) => {
 	const { initHighlight, buffMode, setBuffMode } = props;
 
 	const [prospects, setProspects] = React.useState<LockedProspect[]>([] as LockedProspect[]);
-
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < DEFAULT_MOBILE_WIDTH;
 
 	const rosterPlusProspects = props.rosterCrew.slice();
@@ -98,7 +98,6 @@ export const RosterTable = (props: RosterTableProps) => {
 		}
 
 		if (props.rosterType === 'myCrew') {
-
 			prospects.forEach(prospect => {
 				const crew = globalContext.core.crew.find(crew => crew.symbol === prospect.symbol);
 				if (crew) {
@@ -237,6 +236,8 @@ const CrewConfigTableMaker = (props: { tableType: RosterType }) => {
 	const [ownedSkills, setOwnedSkills] = React.useState<string[]>([]);
 	const [maxedSkills, setMaxedSkills] = React.useState<string[]>([]);
 
+	const [offers, setOffers] = React.useState<string[]>([]);
+
 	const [dataPrepared, setDataPrepared] = React.useState<IDataPrepared>({} as IDataPrepared);
 	const [crewMarkups, setCrewMarkups] = React.useState<ICrewMarkup[]>([] as ICrewMarkup[]);
 	const [crewFilters, setCrewFilters] = React.useState<ICrewFilter[]>([] as ICrewFilter[]);
@@ -261,6 +262,7 @@ const CrewConfigTableMaker = (props: { tableType: RosterType }) => {
 	const [altBaseLayout, setAltBaseLayout] = useStateWithStorage<boolean | undefined>(pageId+'/rosterTable/altBaseLayout', false, { rememberForever: true });
 	const [activeRarities, setActiveRarities] = React.useState([] as number[]);
 	const [currentWorker, setCurrentWorker] = React.useState<UnifiedWorker | undefined>(undefined);
+
 	const [rosterConfig, setRosterConfig] = React.useState<RosterConfig | undefined>({
 			slots,
 			traitsOnly,
@@ -528,6 +530,18 @@ const CrewConfigTableMaker = (props: { tableType: RosterType }) => {
 				/>
 		},
 		{
+			id: 'offers',
+			available: (['offers'].includes(rosterType)),
+			form:
+				<CrewOfferFilter
+					key='filter_allcrew_offers'
+					offers={offers}
+					pageId={pageId}
+					crewFilters={crewFilters}
+					setCrewFilters={setCrewFilters}
+				/>
+		},
+		{
 			id: 'skillorder_ownership',
 			available: (['offers', 'allCrew', 'buyBack'].includes(rosterType)) && !!playerData,
 			form:
@@ -632,6 +646,10 @@ const CrewConfigTableMaker = (props: { tableType: RosterType }) => {
 	}, [slots, traitsOnly, powerMode, rosterType, tableView, specialView]);
 
 	React.useEffect(() => {
+		if (preparedCrew?.length && rosterType === 'offers') {
+			let offers = [...new Set(preparedCrew.map(c => c.offers ?? []).flat().map(o => o.name))].sort();
+			setOffers(offers);
+		}
 		setDataPrepared({
 			rosterType,
 			rosterCount: preparedCrew ? preparedCrew.length : 0,

@@ -212,8 +212,12 @@ function listingsToCrew(listings: Listing[], crewList: CrewMember[], offerName?:
         if (offer.offer.descriptions.length < 2) return;
         let crew = offer.offer.obtain.map(m => m.spec).filter(f => f.endsWith("_crew")).map(m => crewList.find(fcm => fcm.symbol === m)).filter(fc => !!fc);
         if (!crew?.length) {
-            let split = offer.offer.descriptions[1].split(/\<[#A-Fa-f0-9]+\>/).map(sp => sp.replace(/\<\/[#A-Za-z0-9]+\>.*/, '').replace(/\n.*/g, '').trim());
-            crew = crewList.filter(f => split.includes(f.name) || (f.name_english && split.includes(f.name_english)));
+            let split = offer.offer.descriptions.join(" ").split(/\<[#A-Fa-f0-9]+\>/).map(sp => sp.replace(/\<\/[#A-Za-z0-9]+\>.*/, '').replace(/\n.*/g, '').trim());
+            crew = crewList.filter(f => {
+                let cname = f.name.replace(/\"/g, '');
+                let cename = f.name_english?.replace(/\"/g, '');
+                return split.includes(cname) || (cename && split.includes(cename))
+            });
         }
         result.push({
             name: offer.offer.titles[0],

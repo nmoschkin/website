@@ -34,7 +34,6 @@ export const RosterPicker = (props: RosterPickerProps) => {
 	const [buyBackCrew, setBuyBackCrew] = React.useState<IRosterCrew[] | undefined>(undefined);
 	const [myCrew, setMyCrew] = React.useState<IRosterCrew[] | undefined>(undefined);
 	const [offerCrew, setOfferCrew] = React.useState<IRosterCrew[] | undefined>(undefined);
-
 	const [newDismissed, setNewDismissed] = useStateWithStorage('bbnew_dismissed', [] as string[]);
 	const [fuseDismissed, setFuseDismissed] = useStateWithStorage('bbfuse_dismissed', [] as string[]);
 
@@ -365,14 +364,16 @@ export const RosterPicker = (props: RosterPickerProps) => {
 
 			const offerData = await loadOfferCrew2(globalContext.core.crew) ?? [];
 			const offers = {} as { [key: string]: OfferCrew[] }
+
 			offerData.forEach((offer) => {
 				offer.crew.forEach((crew) => {
 					offers[crew.symbol] ??= [];
 					let curr = offers[crew.symbol].find(fc => JSON.stringify(fc.drop_info) == JSON.stringify(offer.drop_info));
-					if (!curr)
+					if (!curr) {
 						offers[crew.symbol].push(offer);
+					}
 				});
-			})
+			});
 			const crewMap = [ ... new Set((offerData)?.map(c => c.crew).flat()) ];
 
 			rosterCrew = rosterizeAllCrew(crewMap, offers);
