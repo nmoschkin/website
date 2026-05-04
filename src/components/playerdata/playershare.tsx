@@ -19,8 +19,10 @@ interface ShortCrew {
 		c_stored_immortals: number[],
 		stored_immortals: [{
 			id: number,
-			quantity: number
-		}]
+			quantity: number,
+			qbits?: number
+		}],
+		first_sight?: { [key: string]: Date }
 	}
 }
 
@@ -320,6 +322,17 @@ const PlayerProfileUploader = (props: PlayerProfileUploaderProps) => {
 					if (setNewCrew) {
 						let changedCrew = strippedPlayerData?.player.character.crew.filter(f => !short_crew.shortCrewList.crew.find(cf => cf.id === f.archetype_id && cf.rarity === f.rarity));
 						setNewCrew(changedCrew);
+					}
+					if (short_crew?.shortCrewList?.first_sight) {
+						const crewSight = short_crew.shortCrewList.first_sight;
+						Object.keys(crewSight).forEach((id) => {
+							crewSight[id] = new Date(crewSight[id]);
+							if (strippedPlayerData) {
+								strippedPlayerData.player.character.crew.forEach(crew => {
+									crew.discovered = crewSight[crew.archetype_id];
+								});
+							}
+						});
 					}
 				})
 				.then(() => {

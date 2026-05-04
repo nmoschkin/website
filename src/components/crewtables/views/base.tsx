@@ -218,6 +218,28 @@ export const getBaseTableConfig = (tableType: RosterType, t: TranslateMethod, al
 			},
 		);
 	}
+	if (tableType === 'myCrew' && !cheap) {
+		tableConfig.push(
+			{
+				width: 1,
+				column: 'discovered',
+				title: t('global.discovered'),
+				reverse: true,
+				customCompare: (a: PlayerCrew, b: PlayerCrew) => {
+					if (a.discovered && b.discovered) {
+						return a.discovered.getTime() - b.discovered.getTime();
+					}
+					else if (b.discovered) {
+						return -1;
+					}
+					else if (a.discovered) {
+						return 1;
+					}
+					return 0;
+				}
+			}
+		)
+	}
 	return tableConfig;
 };
 
@@ -332,6 +354,11 @@ export const CrewBaseCells = (props: CrewCellProps) => {
 			{!!cheap && (
 				<Table.Cell>
 					<CollectionDisplay clickAction='modal' crew={crew} showProgress />
+				</Table.Cell>
+			)}
+			{!cheap && tableType === 'myCrew' && (
+				<Table.Cell>
+					{crew.discovered?.toLocaleDateString() || ''}
 				</Table.Cell>
 			)}
 		</React.Fragment>

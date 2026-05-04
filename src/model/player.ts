@@ -658,6 +658,8 @@ export interface PlayerCrew extends CrewMember, CompactCrew, IntermediateSkillDa
   data: any;
 
   is_new?: boolean;
+
+  discovered?: Date;
 }
 
 /**
