@@ -737,6 +737,7 @@ const CrewConfigTableMaker = (props: { tableType: RosterType }) => {
 								tableType={props.tableType}
 								crew={crew}
 								cheap={specialView === 'cheapestfffe'}
+								discovery={!!globalContext.player.crewDiscovery}
 							/>}
 						lockableCrew={lockableCrew}
 						specialView={specialView}

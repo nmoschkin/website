@@ -353,6 +353,12 @@ export const RosterPicker = (props: RosterPickerProps) => {
 					rcrew?.forEach((c) => c.is_new = true)
 				});
 			}
+			if (globalContext.player.crewDiscovery) {
+				const discovery = globalContext.player.crewDiscovery;
+				rosterCrew.forEach((crew) => {
+					crew.discovery_date = discovery[crew.archetype_id];
+				});
+			}
 			setMyCrew([...rosterCrew]);
 			setRosterCrew([...rosterCrew]);
 		}

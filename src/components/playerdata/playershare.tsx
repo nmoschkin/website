@@ -261,7 +261,7 @@ const PlayerProfileUploader = (props: PlayerProfileUploaderProps) => {
 	const [showResponse, setShowResponse] = React.useState(false);
 	const [errorMessage, setErrorMessage] = React.useState<string | undefined>(undefined);
 
-	const { setNewCrew } = globalContext.player;
+	const { setNewCrew, setCrewDiscovery } = globalContext.player;
 
 	React.useEffect(() => {
 		if (!strippedPlayerData) return;
@@ -315,19 +315,7 @@ const PlayerProfileUploader = (props: PlayerProfileUploaderProps) => {
 	function updateDiscovered(short_crew: ShortCrew) {
 		if (short_crew?.shortCrewList?.first_sight) {
 			const crewSight = short_crew.shortCrewList.first_sight;
-			Object.keys(crewSight).forEach((id) => {
-				crewSight[id] = new Date(crewSight[id]);
-				if (strippedPlayerData) {
-					strippedPlayerData.player.character.crew.forEach(crew => {
-						if (crewSight[crew.archetype_id]) {
-							crew.discovery_date = new Date(crewSight[crew.archetype_id]);
-						}
-						else {
-							delete crew.discovery_date;
-						}
-					});
-				}
-			});
+			setCrewDiscovery(crewSight);
 		}
 	}
 

@@ -27,6 +27,8 @@ export interface PlayerContextData {
 	setInput?: (value: PlayerData | undefined) => void;
 	setNewCrew: (value: PlayerCrew[] | undefined) => void;
 	newCrew?: PlayerCrew[];
+	setCrewDiscovery: (value: {[key:string]: Date} | undefined) => void;
+	crewDiscovery?: {[key:string]: Date};
 	reset?: () => void;
 	guildCache: GuildCache[];
 	playerData?: PlayerData;
@@ -73,6 +75,8 @@ export const defaultPlayer = {
 	loaded: false,
 	setInput: () => {},
 	setNewCrew: () => false,
+	crewDiscovery: {},
+	setCrewDiscovery: () => false,
 	reset: () => {},
 	sessionStates: defaultSessionStates,
 	updateSessionState: () => {},
@@ -117,6 +121,8 @@ export const PlayerProvider = (props: DataProviderProperties) => {
 	const [restoreHiddenAlerts, setRestoreHiddenAlerts] = React.useState(false);
 	const [noGradeColors, internalSetNoGradeColors] = React.useState(tiny.getValue<boolean>('noGradeColors') ?? false)
 	const [newCrew, setNewCrew] = useStateWithStorage(`${stripped ? stripped.player.dbid : ''}/newCrew`, undefined as PlayerCrew[] | undefined);
+	const [crewDiscovery, setCrewDiscovery] = useStateWithStorage(`${stripped ? stripped.player.dbid : ''}/crewDiscovery`, undefined as {[key:string]: Date} | undefined);
+
 	const setNoGradeColors = (value: boolean) => {
 		tiny.setValue('noGradeColors', value, true);
 		internalSetNoGradeColors(value);
@@ -245,6 +251,8 @@ export const PlayerProvider = (props: DataProviderProperties) => {
 		setNoGradeColors,
 		setNewCrew,
 		newCrew,
+		setCrewDiscovery,
+		crewDiscovery,
 		showBuybackAlerts,
 		setShowBuybackAlerts,
 		restoreHiddenAlerts,

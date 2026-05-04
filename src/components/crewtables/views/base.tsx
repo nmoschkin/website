@@ -24,7 +24,7 @@ import { OptionsPanelFlexColumn, OptionsPanelFlexRow } from '../../stats/utils';
 import { AvatarView } from '../../item_presenters/avatarview';
 import { navigate } from 'gatsby';
 
-export const getBaseTableConfig = (tableType: RosterType, t: TranslateMethod, alternativeLayout?: boolean, cheap?: boolean, ocols?: string[]) => {
+export const getBaseTableConfig = (tableType: RosterType, t: TranslateMethod, alternativeLayout?: boolean, cheap?: boolean, ocols?: string[], discovery?: boolean) => {
 	const tableConfig = [] as ITableConfigRow[];
 	tableConfig.push(
 		// { width: 1, column: 'bigbook_tier', title: t('base.bigbook_tier'), tiebreakers: ['cab_ov_rank'], tiebreakers_reverse: [false] },
@@ -218,7 +218,7 @@ export const getBaseTableConfig = (tableType: RosterType, t: TranslateMethod, al
 			},
 		);
 	}
-	if (tableType === 'myCrew' && !cheap) {
+	if (tableType === 'myCrew' && !cheap && !!discovery) {
 		tableConfig.push(
 			{
 				width: 1,
@@ -251,11 +251,12 @@ type CrewCellProps = {
 	tableType: RosterType
 	alternativeLayout?: boolean
 	absRank?: boolean,
-	cheap?: boolean
+	cheap?: boolean,
+	discovery?: boolean
 };
 
 export const CrewBaseCells = (props: CrewCellProps) => {
-	const { crew, tableType, absRank, alternativeLayout, cheap } = props;
+	const { crew, tableType, absRank, alternativeLayout, cheap, discovery } = props;
 	const { t } = React.useContext(GlobalContext).localized;
 	const tiny = TinyStore.getStore("index");
 
@@ -357,7 +358,7 @@ export const CrewBaseCells = (props: CrewCellProps) => {
 					<CollectionDisplay clickAction='modal' crew={crew} showProgress />
 				</Table.Cell>
 			)}
-			{!cheap && tableType === 'myCrew' && (
+			{!cheap && tableType === 'myCrew' && !!discovery && (
 				<Table.Cell>
 					{crew.discovery_date?.toLocaleDateString() ?? ''}
 				</Table.Cell>
