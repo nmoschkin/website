@@ -659,7 +659,7 @@ export interface PlayerCrew extends CrewMember, CompactCrew, IntermediateSkillDa
 
   is_new?: boolean;
 
-  discovered?: Date;
+  discovery_date?: Date;
 }
 
 /**

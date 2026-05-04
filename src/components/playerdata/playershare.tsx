@@ -320,7 +320,10 @@ const PlayerProfileUploader = (props: PlayerProfileUploaderProps) => {
 				if (strippedPlayerData) {
 					strippedPlayerData.player.character.crew.forEach(crew => {
 						if (crewSight[crew.archetype_id]) {
-							crew.discovered = new Date(crewSight[crew.archetype_id]);
+							crew.discovery_date = new Date(crewSight[crew.archetype_id]);
+						}
+						else {
+							delete crew.discovery_date;
 						}
 					});
 				}

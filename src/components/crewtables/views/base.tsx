@@ -226,13 +226,15 @@ export const getBaseTableConfig = (tableType: RosterType, t: TranslateMethod, al
 				title: t('global.discovered'),
 				reverse: true,
 				customCompare: (a: PlayerCrew, b: PlayerCrew) => {
-					if (a.discovered && b.discovered) {
-						return a.discovered.getTime() - b.discovered.getTime();
+					if (a.discovery_date && typeof a.discovery_date === 'string') a.discovery_date = new Date(a.discovery_date);
+					if (b.discovery_date && typeof b.discovery_date === 'string') b.discovery_date = new Date(b.discovery_date);
+					if (a.discovery_date && b.discovery_date) {
+						return a.discovery_date.getTime() - b.discovery_date.getTime();
 					}
-					else if (b.discovered) {
+					else if (b.discovery_date) {
 						return -1;
 					}
-					else if (a.discovered) {
+					else if (a.discovery_date) {
 						return 1;
 					}
 					return 0;
@@ -265,7 +267,8 @@ export const CrewBaseCells = (props: CrewCellProps) => {
 	//const tuvixColor = crew.ranks.scores?.tuvix ? gradeToColor(crew.ranks.scores.tuvix / 100) ?? undefined : undefined;
 
 	const voyPower = Math.ceil(skillSum(Object.entries(crew).filter(([key, val]) => key.endsWith("_skill")).map(([key, val]) => val)));
-
+	if (crew.discovery_date !== undefined)
+		console.log(`${crew.symbol} - ${crew.discovery_date}`);
 	return (
 		<React.Fragment>
 			<Table.Cell textAlign='center'>
@@ -358,7 +361,7 @@ export const CrewBaseCells = (props: CrewCellProps) => {
 			)}
 			{!cheap && tableType === 'myCrew' && (
 				<Table.Cell>
-					{crew.discovered?.toLocaleDateString() || ''}
+					{crew.discovery_date?.toLocaleDateString() ?? ''}
 				</Table.Cell>
 			)}
 		</React.Fragment>
