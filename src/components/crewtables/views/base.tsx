@@ -267,8 +267,6 @@ export const CrewBaseCells = (props: CrewCellProps) => {
 	//const tuvixColor = crew.ranks.scores?.tuvix ? gradeToColor(crew.ranks.scores.tuvix / 100) ?? undefined : undefined;
 
 	const voyPower = Math.ceil(skillSum(Object.entries(crew).filter(([key, val]) => key.endsWith("_skill")).map(([key, val]) => val)));
-	if (crew.discovery_date !== undefined)
-		console.log(`${crew.symbol} - ${crew.discovery_date}`);
 	return (
 		<React.Fragment>
 			<Table.Cell textAlign='center'>
