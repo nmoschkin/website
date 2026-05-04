@@ -312,6 +312,19 @@ const PlayerProfileUploader = (props: PlayerProfileUploaderProps) => {
 		</div>
 	);
 
+	function updateDiscovered(short_crew: ShortCrew) {
+		if (short_crew?.shortCrewList?.first_sight) {
+			const crewSight = short_crew.shortCrewList.first_sight;
+			Object.keys(crewSight).forEach((id) => {
+				crewSight[id] = new Date(crewSight[id]);
+				if (strippedPlayerData) {
+					strippedPlayerData.player.character.crew.forEach(crew => {
+						crew.discovered = crewSight[crew.archetype_id];
+					});
+				}
+			});
+		}
+	}
 
 	function uploadProfile(): void {
 		let dbid = strippedPlayerData?.player.dbid;
@@ -323,17 +336,7 @@ const PlayerProfileUploader = (props: PlayerProfileUploaderProps) => {
 						let changedCrew = strippedPlayerData?.player.character.crew.filter(f => !short_crew.shortCrewList.crew.find(cf => cf.id === f.archetype_id && cf.rarity === f.rarity));
 						setNewCrew(changedCrew);
 					}
-					if (short_crew?.shortCrewList?.first_sight) {
-						const crewSight = short_crew.shortCrewList.first_sight;
-						Object.keys(crewSight).forEach((id) => {
-							crewSight[id] = new Date(crewSight[id]);
-							if (strippedPlayerData) {
-								strippedPlayerData.player.character.crew.forEach(crew => {
-									crew.discovered = crewSight[crew.archetype_id];
-								});
-							}
-						});
-					}
+					updateDiscovered(short_crew);
 				})
 				.then(() => {
 					setTimeout(() => continueUpload());
@@ -361,6 +364,9 @@ const PlayerProfileUploader = (props: PlayerProfileUploaderProps) => {
 			// 	if (typeof window !== 'undefined') window.open(profileLink, '_blank');
 			if (data.hash && !!setDbidHash) {
 				setDbidHash(data.hash as string);
+			}
+			if (data.shortCrewList) {
+				updateDiscovered(data);
 			}
 			if (updateSessionState) updateSessionState('profileUpload', ProfileUploadState.Success);
 			setErrorMessage(undefined);
