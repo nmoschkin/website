@@ -727,7 +727,7 @@ const CrewConfigTableMaker = (props: { tableType: RosterType }) => {
 						rosterCrew={preparedCrew}
 						crewFilters={crewFilters}
 						extraSearchContent={view ? view?.extraSearchContent : renderExtraSearchContent()}
-						tableConfig={view?.tableConfig ?? getBaseTableConfig(props.tableType, t, altBaseLayout && rosterType !== 'offers', specialView === 'cheapestfffe', ocols)}
+						tableConfig={view?.tableConfig ?? getBaseTableConfig(props.tableType, t, altBaseLayout && rosterType !== 'offers', specialView === 'cheapestfffe', ocols, !!globalContext.player.crewDiscovery)}
 						renderTableCells={(crew: IRosterCrew) =>
 							view?.renderTableCells ?
 							view.renderTableCells(crew) :
