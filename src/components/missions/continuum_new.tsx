@@ -63,7 +63,7 @@ export const ContinuumComponentNew = (props: ContinuumComponentProps) => {
 
     /* Missions Data Initialization & Persistence */
 
-    const [remoteQuests, setRemoteQuests] = useStateWithStorage<RemoteQuestStore[]>(`${dbid}/continuum/remoteQuests`, [], { rememberForever: true, compress: true, avoidSessionStorage: true });
+    const [remoteQuests, setRemoteQuests] = useStateWithStorage<RemoteQuestStore[] | undefined>(`${dbid}/continuum/remoteQuests`, undefined, { rememberForever: true, compress: true, avoidSessionStorage: true });
     const [mission, internalSetMission] = React.useState<ContinuumMission | undefined>();
     const [currentHasRemote, setCurrentHasRemote] = React.useState(false);
 
@@ -72,7 +72,7 @@ export const ContinuumComponentNew = (props: ContinuumComponentProps) => {
             let b = [] as boolean[];
             for (let i = 0; i < mission.quests.length; i++) {
                 if (mission.quests[i]) {
-                    b[i] = remoteQuests.some(rq => rq.id === mission.quests![i].id);
+                    b[i] = remoteQuests?.some(rq => rq.id === mission.quests![i].id) ?? false;
                 }
             }
             return b;
@@ -246,7 +246,7 @@ export const ContinuumComponentNew = (props: ContinuumComponentProps) => {
 
                 let selTraits = cleanTraitSelection(result?.quests ?? [], selectedTraits);
 
-                if (result.quests) {
+                if (result.quests && remoteQuests) {
                     for (let i = 0; i < result.quests.length; i++) {
                         let quests = result.quests;
                         let fremote = remoteQuests.find(f => f.id === quests[i].id)
@@ -270,7 +270,7 @@ export const ContinuumComponentNew = (props: ContinuumComponentProps) => {
                     result.discover_date = new Date(result.discover_date);
                 }
                 if (result?.quests) {
-                    for (let nrq of remoteQuests) {
+                    for (let nrq of remoteQuests ?? []) {
                         let fi = result.quests!.findIndex(q => q.id === nrq.id);
                         if (fi > -1) {
                             result.quests![fi] = nrq.quest;
@@ -302,7 +302,7 @@ export const ContinuumComponentNew = (props: ContinuumComponentProps) => {
         }
         setLoading(true);
             setTimeout(() => {
-            let rq = [ ...remoteQuests ];
+            let rq = [ ...remoteQuests ?? [] ];
             let fi = rq.findIndex(f => f.id === quest.id);
 
             if (fi !== -1) {
